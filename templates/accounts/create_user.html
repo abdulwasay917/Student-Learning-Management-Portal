@@ -1,0 +1,35 @@
+<h2>Create User (Admin Only)</h2>
+
+<input type="text" id="username" placeholder="Username"><br><br>
+<input type="email" id="email" placeholder="Email"><br><br>
+<input type="password" id="password" placeholder="Password"><br><br>
+
+<select id="role">
+    <option value="teacher">Teacher</option>
+    <option value="student">Student</option>
+</select><br><br>
+
+<button onclick="createUser()">Create</button>
+
+<p id="msg"></p>
+
+<script>
+function createUser() {
+    fetch("/api/create-user/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            username: document.getElementById("username").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            role: document.getElementById("role").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("msg").innerText = data.message || data.error;
+    });
+}
+</script>
