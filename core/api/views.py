@@ -17,6 +17,7 @@ class DashboardAPI(APIView):
             "email": user.email,
             "phone": user.phone,
             "role": user.role,
+            "is_superuser": user.is_superuser,
         }
 
         if user.role == "teacher":
