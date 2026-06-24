@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meetings</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    padding:30px;
+}
+
+/* Header */
+
+.header{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    padding:25px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+.header h1{
+    font-size:26px;
+}
+
+/* Create Button */
+
+.create-btn{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    background:#2563eb;
+    color:white;
+    padding:14px 20px;
+    border-radius:50px;
+    text-decoration:none;
+    font-weight:bold;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+    display:none;
+}
+
+.create-btn:hover{
+    background:#1d4ed8;
+}
+
+/* Meeting Cards */
+
+.container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h3{
+    margin-bottom:10px;
+    color:#0f172a;
+}
+
+.card p{
+    color:#64748b;
+    margin-bottom:5px;
+}
+
+/* Join Button */
+
+.join-btn{
+    display:inline-block;
+    margin-top:10px;
+    padding:10px 15px;
+    background:#16a34a;
+    color:white;
+    border-radius:10px;
+    text-decoration:none;
+}
+
+.join-btn:hover{
+    background:#15803d;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="header">
+    <h1>Live Meetings</h1>
+    <p>Join your active classes</p>
+</div>
+
+<div class="container" id="meetings"></div>
+
+<a href="/meetings/create/" class="create-btn" id="createBtn">
+    + Create Meeting
+</a>
+
+<script>
+
+function getRole(){
+    return fetch("/core/api/dashboard/")
+        .then(res => res.json());
+}
+
+function loadMeetings(){
+
+    fetch("/meetings/api/")
+    .then(res => res.json())
+    .then(data => {
+
+        let container =
+            document.getElementById("meetings");
+
+        container.innerHTML = "";
+
+        data.forEach(m => {
+
+            container.innerHTML += `
+                <div class="card">
+
+                    <h3>${m.title}</h3>
+
+                    <p><b>Teacher:</b> ${m.teacher_name}</p>
+
+                    <p><b>Created:</b> ${new Date(m.created_at).toLocaleString()}</p>
+
+                    <p><b>Expires:</b> ${new Date(m.expires_at).toLocaleString()}</p>
+
+                    <a class="join-btn" href="${m.link}" target="_blank">
+                        Join Meeting
+                    </a>
+
+                </div>
+            `;
+        });
+
+    });
+
+}
+
+function checkRole(){
+
+    fetch("/core/api/dashboard/")
+    .then(res => res.json())
+    .then(user => {
+
+        if(user.role === "teacher" || user.is_superuser){
+            document.getElementById("createBtn").style.display = "block";
+        }
+
+    });
+
+}
+
+loadMeetings();
+checkRole();
+
+</script>
+
+</body>
+</html>

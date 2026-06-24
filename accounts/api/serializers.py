@@ -5,7 +5,7 @@ from accounts.models import User, StudentProfile, TeacherProfile
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id","username","name","email","role","phone","profile_image",]
+        fields = ["id","username","name","email","role","phone",]
         read_only_fields = ["id"]
 
 
