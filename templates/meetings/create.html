@@ -1,117 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <title>Create Meeting</title>
 
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:"Segoe UI",sans-serif;
-}
-
 body{
     background:#f4f6f9;
     display:flex;
     justify-content:center;
     align-items:center;
-    min-height:100vh;
+    height:100vh;
+    font-family:sans-serif;
 }
-
-/* Card */
 
 .card{
     background:white;
-    padding:35px;
-    width:100%;
-    max-width:450px;
-    border-radius:18px;
-    box-shadow:0 10px 30px rgba(0,0,0,.1);
+    padding:30px;
+    border-radius:16px;
+    width:400px;
 }
 
-.card h2{
-    margin-bottom:20px;
-    color:#0f172a;
-}
-
-/* Inputs */
-
-input{
+input,button{
     width:100%;
     padding:12px;
-    margin-bottom:15px;
-    border-radius:10px;
-    border:1px solid #d1d5db;
-    outline:none;
+    margin-top:10px;
 }
-
-input:focus{
-    border-color:#2563eb;
-}
-
-/* Button */
 
 button{
-    width:100%;
-    padding:12px;
     background:#2563eb;
     color:white;
     border:none;
-    border-radius:10px;
-    font-size:16px;
-    cursor:pointer;
 }
-
-button:hover{
-    background:#1d4ed8;
-}
-
-#msg{
-    margin-top:10px;
-    color:green;
-    text-align:center;
-}
-
 </style>
-
 </head>
+
 <body>
 
 <div class="card">
+<h2>Create Meeting</h2>
 
-    <h2>Create Meeting</h2>
+<input id="title" placeholder="Title">
+<input id="link" placeholder="Link">
 
-    <input type="text" id="title" placeholder="Meeting Title">
+<button onclick="create()">Create</button>
 
-    <input type="url" id="link" placeholder="Meeting Link">
-
-    <button onclick="createMeeting()">
-        Create
-    </button>
-
-    <p id="msg"></p>
-
+<p id="msg"></p>
 </div>
 
 <script>
 
-function getCookie(name){
-    let cookieValue = null;
-    if(document.cookie){
-        document.cookie.split(';').forEach(c=>{
-            if(c.trim().startsWith(name+'=')){
-                cookieValue = decodeURIComponent(c.trim().substring(name.length+1));
-            }
-        });
-    }
-    return cookieValue;
+function getCookie(n){
+    let v=null;
+    document.cookie.split(';').forEach(c=>{
+        if(c.trim().startsWith(n+'=')){
+            v=decodeURIComponent(c.split('=')[1]);
+        }
+    });
+    return v;
 }
 
-function createMeeting(){
-
+function create(){
     fetch("/meetings/api/create/",{
         method:"POST",
         headers:{
@@ -123,21 +71,10 @@ function createMeeting(){
             link:document.getElementById("link").value
         })
     })
-
-    .then(res=>res.json())
-    .then(data=>{
-
-        if(data.id){
-            document.getElementById("msg").innerText =
-                "Meeting Created Successfully!";
-        }
-        else{
-            document.getElementById("msg").innerText =
-                data.error || "Error creating meeting";
-        }
-
+    .then(r=>r.json())
+    .then(d=>{
+        document.getElementById("msg").innerText="Created!";
     });
-
 }
 
 </script>

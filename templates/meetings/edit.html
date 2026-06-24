@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Edit Meeting</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* Card */
+.card{
+    background:white;
+    padding:30px;
+    width:420px;
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
+}
+
+/* Title */
+.card h2{
+    margin-bottom:20px;
+    color:#0f172a;
+    text-align:center;
+}
+
+/* Inputs */
+input{
+    width:100%;
+    padding:14px;
+    margin-top:12px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    font-size:14px;
+    outline:none;
+    transition:.2s;
+}
+
+input:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+/* Button */
+button{
+    width:100%;
+    padding:14px;
+    margin-top:18px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+/* Message */
+#msg{
+    margin-top:15px;
+    text-align:center;
+    font-size:14px;
+    font-weight:500;
+}
+
+/* Loading text */
+.loading{
+    text-align:center;
+    color:#64748b;
+    font-size:14px;
+    margin-top:10px;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="card">
+
+<h2>Edit Meeting</h2>
+
+<div id="loading" class="loading">Loading meeting data...</div>
+
+<input id="title" placeholder="Meeting Title">
+<input id="link" placeholder="Meeting Link">
+
+<button onclick="updateMeeting()">Update Meeting</button>
+
+<p id="msg"></p>
+
+</div>
+
+<script>
+
+let id = window.location.pathname.split("/").filter(Boolean).pop();
+
+/* CSRF */
+function getCookie(name){
+    let v=null;
+    document.cookie.split(';').forEach(c=>{
+        if(c.trim().startsWith(name+'=')){
+            v=decodeURIComponent(c.trim().split('=')[1]);
+        }
+    });
+    return v;
+}
+
+/* Load existing data */
+fetch("/meetings/api/")
+.then(r=>r.json())
+.then(data=>{
+
+    let meeting = data.find(x => x.id == id);
+
+    if(!meeting){
+        document.getElementById("loading").innerText = "Meeting not found";
+        return;
+    }
+
+    document.getElementById("title").value = meeting.title;
+    document.getElementById("link").value = meeting.link;
+
+    document.getElementById("loading").style.display = "none";
+
+});
+
+/* Update */
+function updateMeeting(){
+
+    let title = document.getElementById("title").value;
+    let link = document.getElementById("link").value;
+
+    if(!title || !link){
+        document.getElementById("msg").style.color = "#dc2626";
+        document.getElementById("msg").innerText = "All fields are required";
+        return;
+    }
+
+    fetch(`/meetings/api/update/${id}/`,{
+        method:"PUT",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":getCookie("csrftoken")
+        },
+        body:JSON.stringify({
+            title:title,
+            link:link
+        })
+    })
+    .then(async res=>{
+
+        let data = await res.json();
+
+        if(res.ok){
+            document.getElementById("msg").style.color = "#16a34a";
+            document.getElementById("msg").innerText = "Meeting updated successfully!";
+        }
+        else{
+            document.getElementById("msg").style.color = "#dc2626";
+            document.getElementById("msg").innerText = data.error || "Update failed";
+        }
+
+    })
+    .catch(()=>{
+        document.getElementById("msg").style.color = "#dc2626";
+        document.getElementById("msg").innerText = "Network error";
+    });
+
+}
+
+</script>
+
+</body>
+</html>
