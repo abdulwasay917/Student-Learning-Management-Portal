@@ -1,5 +1,7 @@
 <h2>Forgot Password</h2>
 
+{% csrf_token %}
+
 <input type="email" id="email" placeholder="Enter Email"><br><br>
 
 <button onclick="sendReset()">Send Reset Link</button>
@@ -7,19 +9,53 @@
 <p id="msg"></p>
 
 <script>
+function getCookie(name) {
+    let cookieValue = null;
+
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+
 function sendReset() {
-    fetch("/api/forgot-password/", {
+    fetch("/accounts/api/forgot-password/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
         },
         body: JSON.stringify({
             email: document.getElementById("email").value
         })
     })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById("msg").innerText = data.message || data.error;
+    .then(async res => {
+        const data = await res.json();
+
+        document.getElementById("msg").innerText =
+            data.message ||
+            data.error ||
+            data.detail ||
+            "Something went wrong";
+
+        console.log("Status:", res.status);
+        console.log(data);
+    })
+    .catch(err => {
+        console.log(err);
+        document.getElementById("msg").innerText = "Request failed";
     });
 }
 </script>
