@@ -1,61 +1,305 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    min-height:100vh;
+    padding:30px;
+}
+
+/* Top Banner */
+
+.profile-banner{
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #1e293b,
+        #334155
+    );
+
+    color:white;
+
+    border-radius:20px;
+
+    padding:30px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    box-shadow:0 15px 30px rgba(0,0,0,.15);
+}
+
+.profile-left h1{
+    margin-bottom:10px;
+}
+
+.profile-left p{
+    opacity:.9;
+    margin-bottom:5px;
+}
+
+.role-badge{
+    background:#2563eb;
+    padding:8px 15px;
+    border-radius:50px;
+    font-size:14px;
+    display:inline-block;
+    margin-top:10px;
+}
+
+/* Cards Section */
+
+.cards{
+    margin-top:30px;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fit,minmax(250px,1fr));
+
+    gap:20px;
+}
+
+.card{
+    background:white;
+
+    padding:25px;
+
+    border-radius:18px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h3{
+    color:#0f172a;
+    margin-bottom:10px;
+}
+
+.card p{
+    color:#64748b;
+    font-size:14px;
+}
+
+/* Teacher / Student Info */
+
+.extra-info{
+    margin-top:20px;
+
+    background:white;
+
+    padding:20px;
+
+    border-radius:18px;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.extra-info h3{
+    margin-bottom:15px;
+}
+
+.extra-info p{
+    margin-bottom:8px;
+}
+
+</style>
+
 </head>
 <body>
 
-<h1 id="welcome"></h1>
+<div class="profile-banner">
 
-<p><b>Username:</b> <span id="username"></span></p>
-<p><b>Email:</b> <span id="email"></span></p>
-<p><b>Phone:</b> <span id="phone"></span></p>
-<p><b>Role:</b> <span id="role"></span></p>
+```
+<div class="profile-left">
 
-<div id="extra-info"></div>
+    <h1 id="welcome">
+        Loading...
+    </h1>
+
+    <p>
+        Username:
+        <span id="username"></span>
+    </p>
+
+    <p>
+        Email:
+        <span id="email"></span>
+    </p>
+
+    <p>
+        Phone:
+        <span id="phone"></span>
+    </p>
+
+    <span
+        id="role"
+        class="role-badge">
+    </span>
+
+</div>
+```
+
+</div>
+
+<div
+    id="extra-info"
+    class="extra-info">
+</div>
+
+<div
+    id="cards"
+    class="cards">
+</div>
 
 <script>
+
 fetch("/core/api/dashboard/")
+
 .then(res => res.json())
+
 .then(data => {
 
-    document.getElementById("welcome").innerText =
+    document.getElementById(
+        "welcome"
+    ).innerText =
         "Welcome " + data.name;
 
-    document.getElementById("username").innerText =
+    document.getElementById(
+        "username"
+    ).innerText =
         data.username;
 
-    document.getElementById("email").innerText =
+    document.getElementById(
+        "email"
+    ).innerText =
         data.email;
 
-    document.getElementById("phone").innerText =
+    document.getElementById(
+        "phone"
+    ).innerText =
         data.phone || "Not Provided";
 
-    document.getElementById("role").innerText =
-        data.role;
+    document.getElementById(
+        "role"
+    ).innerText =
+        data.role.toUpperCase();
 
-    const extra = document.getElementById("extra-info");
+    const extra =
+        document.getElementById(
+            "extra-info"
+        );
 
-    if (data.role === "teacher") {
+    const cards =
+        document.getElementById(
+            "cards"
+        );
+
+    if(data.role === "teacher"){
 
         extra.innerHTML = `
+
             <h3>Teacher Information</h3>
 
-            <p><b>Expertise:</b> ${data.teacher.expertise || "Not Added"}</p>
+            <p>
+                <b>Expertise:</b>
+                ${data.teacher.expertise || "Not Added"}
+            </p>
 
-            <p><b>Bio:</b> ${data.teacher.bio || "Not Added"}</p>
+            <p>
+                <b>Bio:</b>
+                ${data.teacher.bio || "Not Added"}
+            </p>
         `;
 
-    } else if (data.role === "student") {
+        cards.innerHTML = `
+
+            <div class="card">
+                <h3>Courses</h3>
+                <p>Manage your courses.</p>
+            </div>
+
+            <div class="card">
+                <h3>Students</h3>
+                <p>View enrolled students.</p>
+            </div>
+
+            <div class="card">
+                <h3>Assignments</h3>
+                <p>Create and review assignments.</p>
+            </div>
+
+            <div class="card">
+                <h3>Profile</h3>
+                <p>Manage your profile.</p>
+            </div>
+
+        `;
+    }
+
+    if(data.role === "student"){
 
         extra.innerHTML = `
+
             <h3>Student Information</h3>
 
-            <p><b>Roll Number:</b> ${data.student.roll_number || "Not Assigned"}</p>
+            <p>
+                <b>Roll Number:</b>
+                ${data.student.roll_number || "Not Assigned"}
+            </p>
+        `;
+
+        cards.innerHTML = `
+
+            <div class="card">
+                <h3>My Courses</h3>
+                <p>Access enrolled courses.</p>
+            </div>
+
+            <div class="card">
+                <h3>Assignments</h3>
+                <p>View and submit assignments.</p>
+            </div>
+
+            <div class="card">
+                <h3>Results</h3>
+                <p>Check academic performance.</p>
+            </div>
+
+            <div class="card">
+                <h3>Profile</h3>
+                <p>Manage your profile.</p>
+            </div>
+
         `;
     }
 
 });
+
 </script>
 
 </body>

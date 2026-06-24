@@ -11,7 +11,6 @@ class User(AbstractUser):
     name = models.CharField(max_length=150)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student')
     phone = models.CharField(max_length=15, blank=True, null=True)
-    profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
     def __str__(self):
         return self.username
@@ -19,7 +18,7 @@ class User(AbstractUser):
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    roll_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    roll_number = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
         return f"Student: {self.user.name}"
