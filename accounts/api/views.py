@@ -114,7 +114,7 @@ class ForgotPasswordAPI(APIView):
         token = default_token_generator.make_token(user)
 
         link = request.build_absolute_uri(
-            f"/api/reset-password/{uid}/{token}/"
+            f"/accounts/reset-password/{uid}/{token}/"
         )
 
         send_mail(
