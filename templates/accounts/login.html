@@ -1,20 +1,191 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-    <title>Login</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#1e293b,#334155);
+    padding:20px;
+}
+
+.login-card{
+    width:100%;
+    max-width:420px;
+    background:#ffffff;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.logo h2{
+    color:#0f172a;
+    font-size:30px;
+    font-weight:700;
+}
+
+.logo p{
+    color:#64748b;
+    margin-top:8px;
+    font-size:14px;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    color:#334155;
+    font-weight:600;
+    font-size:14px;
+}
+
+.form-control{
+    width:100%;
+    padding:14px 16px;
+    border:1px solid #dbe2ea;
+    border-radius:12px;
+    font-size:15px;
+    transition:.3s;
+}
+
+.form-control:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.login-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:#2563eb;
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.login-btn:hover{
+    background:#1d4ed8;
+}
+
+.forgot-password{
+    text-align:right;
+    margin-top:12px;
+}
+
+.forgot-password a{
+    text-decoration:none;
+    color:#2563eb;
+    font-size:14px;
+    font-weight:500;
+    transition:.3s;
+}
+
+.forgot-password a:hover{
+    color:#1d4ed8;
+    text-decoration:underline;
+}
+
+#msg{
+    margin-top:18px;
+    text-align:center;
+    font-size:14px;
+    min-height:20px;
+    color:#dc2626;
+}
+
+.footer-text{
+    margin-top:20px;
+    text-align:center;
+    color:#94a3b8;
+    font-size:13px;
+}
+
+@media(max-width:480px){
+    .login-card{
+        padding:28px;
+    }
+
+    .logo h2{
+        font-size:26px;
+    }
+}
+</style>
+
 </head>
 <body>
 
-<h2>Login</h2>
+<div class="login-card">
+
+```
+<div class="logo">
+    <h2>Welcome Back</h2>
+    <p>Sign in to access your dashboard</p>
+</div>
 
 {% csrf_token %}
 
-<input type="text" id="username" placeholder="Username"><br><br>
-<input type="password" id="password" placeholder="Password"><br><br>
+<div class="form-group">
+    <label>Username</label>
+    <input
+        type="text"
+        id="username"
+        class="form-control"
+        placeholder="Enter your username">
+</div>
 
-<button onclick="loginUser()">Login</button>
+<div class="form-group">
+    <label>Password</label>
+    <input
+        type="password"
+        id="password"
+        class="form-control"
+        placeholder="Enter your password">
+</div>
+
+<button class="login-btn" onclick="loginUser()">
+    Login
+</button>
+
+<div class="forgot-password">
+    <a href="/accounts/forgot-password/">
+        Forgot Password?
+    </a>
+</div>
 
 <p id="msg"></p>
+
+<div class="footer-text">
+    Secure Authentication Portal
+</div>
+```
+
+</div>
 
 <script>
 function getCookie(name) {
@@ -54,11 +225,13 @@ function loginUser() {
         const data = await res.json();
 
         if (res.ok) {
+            document.getElementById("msg").style.color = "#16a34a";
             document.getElementById("msg").innerText =
                 data.message || "Login successful!";
 
             window.location.href = "/accounts/dashboard/";
         } else {
+            document.getElementById("msg").style.color = "#dc2626";
             document.getElementById("msg").innerText =
                 data.error ||
                 data.detail ||
@@ -70,6 +243,7 @@ function loginUser() {
     })
     .catch(err => {
         console.log(err);
+        document.getElementById("msg").style.color = "#dc2626";
         document.getElementById("msg").innerText = "Request failed";
     });
 }
