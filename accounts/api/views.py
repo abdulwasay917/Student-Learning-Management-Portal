@@ -21,45 +21,71 @@ class CreateUserAPI(APIView):
     permission_classes = [IsAdminUser]
 
     def post(self, request):
-        username = request.data.get('username')
-        email = request.data.get('email')
-        password = request.data.get('password')
-        role = request.data.get('role')
 
-        if not all([username, email, password, role]):
-            return Response({"error": "All fields required"}, status=400)
+        data = request.data
 
-        if role not in ['teacher', 'student']:
-            return Response({"error": "Invalid role"}, status=400)
+        role = data.get("role")
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
+        name = data.get("name")
+        phone = data.get("phone")
+
+        if not role:
+            return Response(
+                {"error": "Role is required"},
+                status=400
+            )
+
+        if role not in ["teacher", "student"]:
+            return Response(
+                {"error": "Invalid role"},
+                status=400
+            )
 
         if User.objects.filter(username=username).exists():
-            return Response({"error": "Username already exists"}, status=400)
+            return Response(
+                {"error": "Username already exists"},
+                status=400
+            )
+
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "Email already exists"},
+                status=400
+            )
 
         user = User.objects.create_user(
             username=username,
             email=email,
             password=password,
-            role=role,
-            is_active=True,
-            is_staff=False,
-            is_superuser=False
+            name=name,
+            phone=phone,
+            role=role
         )
 
         if role == "teacher":
-            TeacherProfile.objects.create(user=user)
-        else:
-            StudentProfile.objects.create(user=user)
 
-        return Response({
-            "message": "User created successfully",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "role": user.role
-            }
-        }, status=201)
+            TeacherProfile.objects.create(
+                user=user,
+                bio=data.get("bio", ""),
+                expertise=data.get("expertise", "")
+            )
 
+        elif role == "student":
 
+            StudentProfile.objects.create(
+                user=user,
+                roll_number=data.get("roll_number")
+            )
+
+        return Response(
+            {
+                "message": f"{role.title()} created successfully",
+                "user_id": user.id
+            },
+            status=201
+        )
 # =========================
 # 2. LOGIN API
 # =========================

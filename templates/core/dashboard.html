@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h1 id="welcome"></h1>
+
+<p><b>Username:</b> <span id="username"></span></p>
+<p><b>Email:</b> <span id="email"></span></p>
+<p><b>Phone:</b> <span id="phone"></span></p>
+<p><b>Role:</b> <span id="role"></span></p>
+
+<div id="extra-info"></div>
+
+<script>
+fetch("/core/api/dashboard/")
+.then(res => res.json())
+.then(data => {
+
+    document.getElementById("welcome").innerText =
+        "Welcome " + data.name;
+
+    document.getElementById("username").innerText =
+        data.username;
+
+    document.getElementById("email").innerText =
+        data.email;
+
+    document.getElementById("phone").innerText =
+        data.phone || "Not Provided";
+
+    document.getElementById("role").innerText =
+        data.role;
+
+    const extra = document.getElementById("extra-info");
+
+    if (data.role === "teacher") {
+
+        extra.innerHTML = `
+            <h3>Teacher Information</h3>
+
+            <p><b>Expertise:</b> ${data.teacher.expertise || "Not Added"}</p>
+
+            <p><b>Bio:</b> ${data.teacher.bio || "Not Added"}</p>
+        `;
+
+    } else if (data.role === "student") {
+
+        extra.innerHTML = `
+            <h3>Student Information</h3>
+
+            <p><b>Roll Number:</b> ${data.student.roll_number || "Not Assigned"}</p>
+        `;
+    }
+
+});
+</script>
+
+</body>
+</html>
