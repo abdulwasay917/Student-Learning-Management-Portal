@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Students List</title>
+<title>Teachers List</title>
 
 <style>
 
@@ -67,12 +67,6 @@ tr:hover{
     background:#f8fafc;
 }
 
-.empty{
-    text-align:center;
-    padding:30px;
-    color:#64748b;
-}
-
 .delete-btn{
     background:#dc2626;
     color:white;
@@ -82,19 +76,20 @@ tr:hover{
     cursor:pointer;
 }
 
-.delete-btn:hover{
-    opacity:.9;
+.empty{
+    text-align:center;
+    padding:30px;
+    color:#64748b;
 }
 
 </style>
-
 </head>
 <body>
 
 <div class="header">
 
     <h1 class="title">
-        Students List
+        Teachers List
     </h1>
 
     <a href="/core/dashboard/" class="back-btn">
@@ -109,23 +104,20 @@ tr:hover{
 
         <thead>
             <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Username</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Roll Number</th>
-                <th id="action-header" style="display:none;">
-                    Action
-                </th>
+                <th>Expertise</th>
+                <th>Action</th>
             </tr>
         </thead>
 
-        <tbody id="students-table">
+        <tbody id="teachers-table">
 
             <tr>
-                <td colspan="7" class="empty">
-                    Loading students...
+                <td colspan="6" class="empty">
+                    Loading teachers...
                 </td>
             </tr>
 
@@ -137,94 +129,63 @@ tr:hover{
 
 <script>
 
-fetch("/accounts/api/students/")
-.then(response => response.json())
+fetch("/accounts/api/teachers/")
+.then(res => res.json())
 .then(data => {
-
-    const students = data.students;
-    const isSuperuser = data.is_superuser;
-
-    if(isSuperuser){
-        document.getElementById("action-header").style.display = "";
-    }
 
     let rows = "";
 
-    if(students.length === 0){
+    if(data.length === 0){
 
         rows = `
             <tr>
-                <td colspan="${isSuperuser ? 7 : 6}" class="empty">
-                    No students found
+                <td colspan="6" class="empty">
+                    No teachers found
                 </td>
             </tr>
         `;
     }
 
-    students.forEach(student => {
+    data.forEach(teacher => {
 
         rows += `
             <tr>
-                <td>${student.id}</td>
-                <td>${student.name}</td>
-                <td>${student.username}</td>
-                <td>${student.email}</td>
-                <td>${student.phone || "N/A"}</td>
-                <td>${student.roll_number || "N/A"}</td>
-        `;
-
-        if(isSuperuser){
-
-            rows += `
+                <td>${teacher.name}</td>
+                <td>${teacher.username}</td>
+                <td>${teacher.email}</td>
+                <td>${teacher.phone || "N/A"}</td>
+                <td>${teacher.expertise || "N/A"}</td>
                 <td>
                     <button
                         class="delete-btn"
-                        onclick="deleteUser(${student.user_id})">
+                        onclick="deleteUser(${teacher.user_id})">
                         Delete
                     </button>
                 </td>
-            `;
-        }
-
-        rows += `</tr>`;
+            </tr>
+        `;
     });
 
-    document.getElementById("students-table").innerHTML = rows;
-
-})
-.catch(error => {
-
-    console.log(error);
-
-    document.getElementById("students-table").innerHTML = `
-        <tr>
-            <td colspan="7" class="empty">
-                Failed to load students
-            </td>
-        </tr>
-    `;
+    document.getElementById("teachers-table").innerHTML = rows;
 
 });
 
 function deleteUser(userId){
 
-    if(!confirm("Are you sure you want to delete this student?")){
+    if(!confirm("Delete this teacher?")){
         return;
     }
 
     fetch(`/accounts/api/delete-user/${userId}/`,{
         method:"DELETE"
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
 
         alert(data.message || data.error);
 
         location.reload();
 
-    })
-    .catch(error => {
-        console.log(error);
     });
 
 }

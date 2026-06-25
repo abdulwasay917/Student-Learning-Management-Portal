@@ -5,14 +5,25 @@ from .views import (
     LogoutAPI,
     ForgotPasswordAPI,
     ResetPasswordAPI,
-    StudentListAPI
+    StudentListAPI,
+    TeacherListAPI,
+    DeleteUserAPI,
 )
 
 urlpatterns = [
-    path('create-user/', CreateUserAPI.as_view()),
-    path('login/', LoginAPI.as_view()),
-    path('logout/', LogoutAPI.as_view()),
-    path('forgot-password/', ForgotPasswordAPI.as_view()),
-    path('reset-password/<uidb64>/<token>/', ResetPasswordAPI.as_view()),
-    path("students/",StudentListAPI.as_view()),
+    path("create-user/", CreateUserAPI.as_view()),
+    path("login/", LoginAPI.as_view()),
+    path("logout/", LogoutAPI.as_view()),
+    path("forgot-password/", ForgotPasswordAPI.as_view()),
+    path(
+        "reset-password/<uidb64>/<token>/",
+        ResetPasswordAPI.as_view()
+    ),
+
+    path("students/", StudentListAPI.as_view()),
+    path("teachers/", TeacherListAPI.as_view()),
+    path(
+        "delete-user/<int:user_id>/",
+        DeleteUserAPI.as_view()
+    ),
 ]
