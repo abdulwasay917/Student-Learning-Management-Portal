@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Submission Detail</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.card{
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+h1{
+    margin-bottom:20px;
+    color:#0f172a;
+}
+
+.item{
+    margin-bottom:18px;
+}
+
+.label{
+    font-weight:600;
+    color:#0f172a;
+    margin-bottom:5px;
+}
+
+.value{
+    color:#475569;
+}
+
+.btn{
+    display:inline-block;
+    margin-top:20px;
+    padding:12px 18px;
+    background:#2563eb;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    font-weight:600;
+}
+
+.btn:hover{
+    background:#1d4ed8;
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+    <h1>Submission Detail</h1>
+
+    <div class="item">
+        <div class="label">Student Name</div>
+        <div class="value" id="student_name"></div>
+    </div>
+
+    <div class="item">
+        <div class="label">Roll Number</div>
+        <div class="value" id="roll_number"></div>
+    </div>
+
+    <div class="item">
+        <div class="label">Assignment</div>
+        <div class="value" id="assignment_title"></div>
+    </div>
+
+    <div class="item">
+        <div class="label">Submitted At</div>
+        <div class="value" id="submitted_at"></div>
+    </div>
+
+    <a
+        id="file_link"
+        class="btn"
+        target="_blank"
+    >
+        View Assignment File
+    </a>
+
+</div>
+
+<script>
+
+const submissionId =
+window.location.pathname.split("/")[3];
+
+fetch(
+    `/assignments/api/submission/${submissionId}/`
+)
+.then(r=>r.json())
+.then(data=>{
+
+    document.getElementById(
+        "student_name"
+    ).innerText =
+        data.student_name;
+
+    document.getElementById(
+        "roll_number"
+    ).innerText =
+        data.roll_number;
+
+    document.getElementById(
+        "assignment_title"
+    ).innerText =
+        data.assignment_title;
+
+    document.getElementById(
+        "submitted_at"
+    ).innerText =
+        new Date(
+            data.submitted_at
+        ).toLocaleString();
+
+    document.getElementById(
+        "file_link"
+    ).href =
+        data.file;
+
+});
+
+</script>
+
+</body>
+</html>

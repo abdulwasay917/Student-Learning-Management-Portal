@@ -39,3 +39,9 @@ def submission_detail_page(
         "assignments/submission_detail.html",
         {"pk": pk}
     )
+
+def create_assignment_page(request):
+    return render(
+        request,
+        "assignments/create.html"
+    )

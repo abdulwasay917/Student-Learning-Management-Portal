@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Submitted Students</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.header{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    padding:25px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+.table{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+.row{
+    display:grid;
+    grid-template-columns:2fr 2fr 1fr;
+    padding:18px;
+    border-bottom:1px solid #e2e8f0;
+    align-items:center;
+}
+
+.head{
+    background:#0f172a;
+    color:white;
+    font-weight:600;
+}
+
+.btn{
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:10px 14px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.btn:hover{
+    background:#1d4ed8;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Submitted Students</h1>
+</div>
+
+<div class="table">
+
+    <div class="row head">
+        <div>Name</div>
+        <div>Roll Number</div>
+        <div>Action</div>
+    </div>
+
+    <div id="rows"></div>
+
+</div>
+
+<script>
+
+const assignmentId =
+window.location.pathname.split("/")[3];
+
+fetch(
+    `/assignments/api/submitted/${assignmentId}/`
+)
+.then(r=>r.json())
+.then(data=>{
+
+    let rows =
+        document.getElementById("rows");
+
+    data.forEach(student=>{
+
+        rows.innerHTML += `
+        <div class="row">
+
+            <div>
+                ${student.student_name}
+            </div>
+
+            <div>
+                ${student.roll_number}
+            </div>
+
+            <div>
+                <button
+                    class="btn"
+                    onclick="viewSubmission(${student.submission_id})">
+                    View
+                </button>
+            </div>
+
+        </div>
+        `;
+
+    });
+
+});
+
+function viewSubmission(id){
+
+    window.location.href =
+    "/assignments/submission/" + id + "/";
+
+}
+
+</script>
+
+</body>
+</html>

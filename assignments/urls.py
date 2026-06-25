@@ -5,6 +5,7 @@ from assignments.views import (
     submitted_students_page,
     not_submitted_students_page,
     submission_detail_page,
+    create_assignment_page
 )
 
 urlpatterns = [
@@ -36,5 +37,10 @@ urlpatterns = [
     path(
         "api/",
         include("assignments.api.urls")
+    ),
+    path(
+        "create/",
+        create_assignment_page,
+        name="create-assignment-page"
     ),
 ]

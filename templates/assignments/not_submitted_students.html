@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Not Submitted Students</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.header{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    padding:25px;
+    border-radius:18px;
+    margin-bottom:25px;
+}
+
+.table{
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+.row{
+    display:grid;
+    grid-template-columns:2fr 2fr;
+    padding:18px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+.head{
+    background:#0f172a;
+    color:white;
+    font-weight:600;
+}
+
+.empty{
+    padding:25px;
+    text-align:center;
+    color:#64748b;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Not Submitted Students</h1>
+</div>
+
+<div class="table">
+
+    <div class="row head">
+        <div>Name</div>
+        <div>Roll Number</div>
+    </div>
+
+    <div id="rows"></div>
+
+</div>
+
+<script>
+
+const assignmentId =
+window.location.pathname.split("/")[3];
+
+fetch(
+    `/assignments/api/not-submitted/${assignmentId}/`
+)
+.then(r=>r.json())
+.then(data=>{
+
+    let rows =
+        document.getElementById("rows");
+
+    if(data.length === 0){
+
+        rows.innerHTML = `
+        <div class="empty">
+            All students have submitted this assignment.
+        </div>
+        `;
+
+        return;
+    }
+
+    data.forEach(student=>{
+
+        rows.innerHTML += `
+        <div class="row">
+
+            <div>
+                ${student.student_name}
+            </div>
+
+            <div>
+                ${student.roll_number}
+            </div>
+
+        </div>
+        `;
+
+    });
+
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Create Assignment</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.card{
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+h1{
+    margin-bottom:20px;
+    color:#0f172a;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:6px;
+    font-weight:600;
+}
+
+input,
+textarea{
+    width:100%;
+    padding:12px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    font-size:15px;
+}
+
+textarea{
+    min-height:180px;
+    resize:vertical;
+}
+
+button{
+    margin-top:20px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 22px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+    <h1>Create Assignment</h1>
+
+    <label>Title</label>
+    <input
+        type="text"
+        id="title"
+    >
+
+    <label>Assignment Statement</label>
+    <textarea
+        id="statement"
+    ></textarea>
+
+    <button onclick="createAssignment()">
+        Create Assignment
+    </button>
+
+</div>
+
+<script>
+
+function getCookie(name){
+    let v=null;
+
+    document.cookie.split(";").forEach(c=>{
+
+        if(c.trim().startsWith(name+"=")){
+            v=decodeURIComponent(
+                c.trim().split("=")[1]
+            );
+        }
+
+    });
+
+    return v;
+}
+
+function createAssignment(){
+
+    fetch(
+        "/assignments/api/create/",
+        {
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json",
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+            },
+
+            body:JSON.stringify({
+                title:
+                    document.getElementById("title").value,
+
+                statement:
+                    document.getElementById("statement").value
+            })
+        }
+    )
+
+    .then(r=>r.json())
+
+    .then(data=>{
+
+        if(data.error){
+            alert(data.error);
+            return;
+        }
+
+        alert("Assignment created");
+
+        window.location.href=
+            "/assignments/";
+    });
+
+}
+
+</script>
+
+</body>
+</html>

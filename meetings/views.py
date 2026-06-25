@@ -10,3 +10,4 @@ def create_meeting_page(request):
 
 def update_meeting_page(request, pk):
     return render(request, "meetings/edit.html", {"pk": pk})
+
