@@ -218,15 +218,27 @@ fetch("/core/api/dashboard/")
     document.getElementById("role").innerText =
         data.role.toUpperCase();
 
-    // SUPERUSER ONLY
+    let links = "";
+
     if(data.is_superuser){
 
-        document.getElementById("admin-links").innerHTML = `
+        links += `
             <a href="/accounts/create-user/">
                 Create User
             </a>
         `;
     }
+
+    if(data.role === "teacher" || data.is_superuser){
+
+        links += `
+            <a href="/accounts/students/">
+                Students
+            </a>
+        `;
+    }
+
+    document.getElementById("admin-links").innerHTML = links;
 
     let extra = document.getElementById("extra-info");
 

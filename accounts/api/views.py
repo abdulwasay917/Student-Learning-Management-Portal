@@ -4,19 +4,15 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny
-
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from .serializers import StudentProfileSerializer
 from accounts.models import TeacherProfile, StudentProfile
 
 User = get_user_model()
 
 
-# =========================
-# 1. ADMIN ONLY CREATE USER
-# =========================
 class CreateUserAPI(APIView):
     permission_classes = [IsAdminUser]
 
@@ -86,9 +82,7 @@ class CreateUserAPI(APIView):
             },
             status=201
         )
-# =========================
-# 2. LOGIN API
-# =========================
+
 class LoginAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -113,18 +107,12 @@ class LoginAPI(APIView):
         })
 
 
-# =========================
-# 3. LOGOUT API
-# =========================
 class LogoutAPI(APIView):
     def post(self, request):
         logout(request)
         return Response({"message": "Logged out successfully"})
 
 
-# =========================
-# 4. FORGOT PASSWORD API
-# =========================
 class ForgotPasswordAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -154,9 +142,6 @@ class ForgotPasswordAPI(APIView):
         return Response({"message": "Reset link sent to email"})
 
 
-# =========================
-# 5. RESET PASSWORD API
-# =========================
 class ResetPasswordAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -176,3 +161,20 @@ class ResetPasswordAPI(APIView):
         user.save()
 
         return Response({"message": "Password reset successful"})
+
+
+
+class StudentListAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        students = StudentProfile.objects.select_related(
+            "user"
+        )
+
+        serializer = StudentProfileSerializer(
+            students,
+            many=True
+        )
+
+        return Response(serializer.data)

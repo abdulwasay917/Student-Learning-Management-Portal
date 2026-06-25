@@ -4,6 +4,7 @@ from .views import (
     create_user_view,
     forgot_password_view,
     reset_password_view,
+    student_list_view
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path("forgot-password/", forgot_password_view, name="forgot-password"),
     path("reset-password/<uidb64>/<token>/",reset_password_view,name="reset-password",),
     path("api/", include("accounts.api.urls")),
+    path("students/",student_list_view,name="students"),
 ]

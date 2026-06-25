@@ -1,3 +1,16 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Meeting
+
+
+@admin.register(Meeting)
+class MeetingAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "title",
+        "link",
+        "teacher",
+        "created_at",
+        "expires_at",
+    )

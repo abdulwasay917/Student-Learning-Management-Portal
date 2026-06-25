@@ -135,3 +135,6 @@ EMAIL_HOST_USER = 'to0om917@gmail.com'
 EMAIL_HOST_PASSWORD = 'bsup spys vgoh adov'
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

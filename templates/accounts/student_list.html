@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Students List</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
+body{
+    background:#f8fafc;
+    padding:30px;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.title{
+    font-size:28px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.back-btn{
+    text-decoration:none;
+    background:#2563eb;
+    color:white;
+    padding:10px 16px;
+    border-radius:8px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:16px;
+    box-shadow:0 4px 15px rgba(0,0,0,.08);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#0f172a;
+    color:white;
+    padding:14px;
+    text-align:left;
+}
+
+td{
+    padding:14px;
+    border-bottom:1px solid #e2e8f0;
+}
+
+tr:hover{
+    background:#f8fafc;
+}
+
+.empty{
+    text-align:center;
+    padding:30px;
+    color:#64748b;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="header">
+
+    <h1 class="title">
+        Students List
+    </h1>
+
+    <a href="/core/dashboard/" class="back-btn">
+        Back to Dashboard
+    </a>
+
+</div>
+
+<div class="card">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Roll Number</th>
+            </tr>
+        </thead>
+
+        <tbody id="students-table">
+
+            <tr>
+                <td colspan="6" class="empty">
+                    Loading students...
+                </td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<script>
+
+fetch("/accounts/api/students/")
+.then(response => response.json())
+.then(data => {
+
+    let rows = "";
+
+    if(data.length === 0){
+
+        rows = `
+            <tr>
+                <td colspan="6" class="empty">
+                    No students found
+                </td>
+            </tr>
+        `;
+    }
+
+    data.forEach(student => {
+
+        rows += `
+            <tr>
+                <td>${student.id}</td>
+                <td>${student.user.name}</td>
+                <td>${student.user.username}</td>
+                <td>${student.user.email}</td>
+                <td>${student.user.phone || "N/A"}</td>
+                <td>${student.roll_number || "N/A"}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("students-table").innerHTML = rows;
+
+})
+.catch(error => {
+
+    console.log(error);
+
+    document.getElementById("students-table").innerHTML = `
+        <tr>
+            <td colspan="6" class="empty">
+                Failed to load students
+            </td>
+        </tr>
+    `;
+
+});
+
+</script>
+
+</body>
+</html>

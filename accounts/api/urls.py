@@ -4,7 +4,8 @@ from .views import (
     LoginAPI,
     LogoutAPI,
     ForgotPasswordAPI,
-    ResetPasswordAPI
+    ResetPasswordAPI,
+    StudentListAPI
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path('logout/', LogoutAPI.as_view()),
     path('forgot-password/', ForgotPasswordAPI.as_view()),
     path('reset-password/<uidb64>/<token>/', ResetPasswordAPI.as_view()),
+    path("students/",StudentListAPI.as_view()),
 ]
