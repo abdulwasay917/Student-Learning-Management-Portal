@@ -193,15 +193,26 @@
 
                     if (user.role === "student") {
 
-                        buttons = `
-                <button
-                    class="submit"
+                        if (a.submitted) {
+
+                            buttons = `
+            <button
+                class="submitted"
+                onclick="submitAssignment(${a.id})">
+                Edit Submission
+            </button>
+        `;
+
+                        } else {
+
+                            buttons = `
+            <button
+                class="submit"
                 onclick="submitAssignment(${a.id})">
                 Submit Assignment
-                </button>
-            `;
-
-
+            </button>
+        `;
+                        }
                     } else {
 
                         let canManage =
@@ -339,6 +350,8 @@
                     alert(
                         "Assignment submitted"
                     );
+
+                    loadAssignments();
 
                 });
 

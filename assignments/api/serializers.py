@@ -18,6 +18,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    submitted = serializers.SerializerMethodField()
     submitted_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -30,6 +31,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
             "teacher_name",
             "creator_id",
             "submitted_count",
+            "submitted",
             "created_at",
         ]
 
@@ -42,6 +44,26 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
     def get_submitted_count(self, obj):
         return obj.submissions.count()
+
+    def get_submitted(self, obj):
+
+        request = self.context.get("request")
+
+        if not request:
+            return False
+
+        user = request.user
+
+        if (
+                not user.is_authenticated
+                or user.role != "student"
+        ):
+            return False
+
+        return Submission.objects.filter(
+            assignment=obj,
+            student=user
+        ).exists()
 
 
 class SubmissionSerializer(serializers.ModelSerializer):

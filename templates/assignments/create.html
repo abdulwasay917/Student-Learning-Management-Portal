@@ -134,19 +134,28 @@ function createAssignment(){
         }
     )
 
-    .then(r=>r.json())
+    .then(async r => {
+        let data = await r.json();
+        return { status: r.status, data };
+    })
 
-    .then(data=>{
+    .then(res => {
 
-        if(data.error){
-            alert(data.error);
+        if(res.status !== 201){
+            alert(res.data.error || "Something went wrong");
             return;
         }
 
         alert("Assignment created");
 
-        window.location.href=
-            "/assignments/";
+
+        window.location.href = "/assignments/";
+
+    })
+
+    .catch(err => {
+        console.log(err);
+        alert("Server error");
     });
 
 }

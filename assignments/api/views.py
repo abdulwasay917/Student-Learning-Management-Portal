@@ -28,12 +28,32 @@ class AssignmentListAPI(APIView):
             "-created_at"
         )
 
-        serializer = AssignmentSerializer(
-            assignments,
-            many=True
-        )
+        data = []
 
-        return Response(serializer.data)
+        for assignment in assignments:
+
+            submitted = False
+
+            if (
+                request.user.is_authenticated
+                and request.user.role == "student"
+            ):
+                submitted = Submission.objects.filter(
+                    assignment=assignment,
+                    student=request.user
+                ).exists()
+
+            data.append({
+                "id": assignment.id,
+                "title": assignment.title,
+                "statement": assignment.statement,
+                "created_at": assignment.created_at,
+                "teacher_name": assignment.created_by.name,
+                "creator_id": assignment.created_by.id,
+                "submitted": submitted,
+            })
+
+        return Response(data)
 
 
 # =========================

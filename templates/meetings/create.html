@@ -1,50 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Create Meeting</title>
 
 <style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Segoe UI",sans-serif;
+}
+
 body{
     background:#f4f6f9;
     display:flex;
     justify-content:center;
     align-items:center;
     height:100vh;
-    font-family:sans-serif;
 }
 
+/* CARD */
 .card{
     background:white;
     padding:30px;
-    border-radius:16px;
-    width:400px;
+    border-radius:18px;
+    width:420px;
+    box-shadow:0 6px 18px rgba(0,0,0,.08);
 }
 
-input,button{
+/* TITLE */
+h2{
+    margin-bottom:20px;
+    color:#0f172a;
+}
+
+/* INPUTS */
+input{
     width:100%;
     padding:12px;
-    margin-top:10px;
+    margin-top:12px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    font-size:14px;
 }
 
+/* BUTTON */
 button{
+    width:100%;
+    margin-top:18px;
+    padding:12px;
     background:#2563eb;
     color:white;
     border:none;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
 }
+
+button:hover{
+    background:#1d4ed8;
+}
+
+/* MESSAGE */
+#msg{
+    margin-top:12px;
+    font-size:14px;
+    color:#16a34a;
+    font-weight:600;
+    text-align:center;
+}
+
 </style>
 </head>
 
 <body>
 
 <div class="card">
+
 <h2>Create Meeting</h2>
 
-<input id="title" placeholder="Title">
-<input id="link" placeholder="Link">
+<input id="title" placeholder="Meeting Title">
+<input id="link" placeholder="Meeting Link">
 
-<button onclick="create()">Create</button>
+<button onclick="createMeeting()">Create Meeting</button>
 
 <p id="msg"></p>
+
 </div>
 
 <script>
@@ -59,7 +102,8 @@ function getCookie(n){
     return v;
 }
 
-function create(){
+function createMeeting(){
+
     fetch("/meetings/api/create/",{
         method:"POST",
         headers:{
@@ -71,10 +115,37 @@ function create(){
             link:document.getElementById("link").value
         })
     })
-    .then(r=>r.json())
-    .then(d=>{
-        document.getElementById("msg").innerText="Created!";
+
+    .then(async r=>{
+        let data = await r.json();
+        return {status:r.status,data};
+    })
+
+    .then(res=>{
+
+        if(res.status !== 201){
+            document.getElementById("msg").style.color="red";
+            document.getElementById("msg").innerText =
+                res.data.error || "Something went wrong";
+            return;
+        }
+
+        document.getElementById("msg").style.color="#16a34a";
+        document.getElementById("msg").innerText = "Meeting created! Redirecting...";
+
+        // ✅ redirect after short delay
+        setTimeout(()=>{
+            window.location.href="/meetings/";
+        }, 800);
+
+    })
+
+    .catch(err=>{
+        console.log(err);
+        document.getElementById("msg").style.color="red";
+        document.getElementById("msg").innerText="Server error";
     });
+
 }
 
 </script>
