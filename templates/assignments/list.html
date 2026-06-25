@@ -1,119 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Assignments</title>
+    <meta charset="UTF-8">
+    <title>Assignments</title>
 
-<style>
+    <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:"Segoe UI",sans-serif;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", sans-serif;
+        }
 
-body{
-    background:#f4f6f9;
-    padding:30px;
-}
+        body {
+            background: #f4f6f9;
+            padding: 30px;
+        }
 
-.header{
-    background:linear-gradient(135deg,#0f172a,#1e293b);
-    color:white;
-    padding:25px;
-    border-radius:18px;
-    margin-bottom:25px;
-}
+        .header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+        }
 
-.container{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
-    gap:20px;
-}
+        .container {
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
+            gap: 20px;
+        }
 
-.card{
-    background:white;
-    padding:22px;
-    border-radius:18px;
-    box-shadow:0 6px 18px rgba(0,0,0,.08);
-}
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 18px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+        }
 
-.card:hover{
-    transform:translateY(-4px);
-    transition:.3s;
-}
+        .card:hover {
+            transform: translateY(-4px);
+            transition: .3s;
+        }
 
-.title{
-    font-size:18px;
-    font-weight:600;
-    color:#0f172a;
-}
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+        }
 
-.sub{
-    font-size:13px;
-    color:#64748b;
-    margin-top:4px;
-}
+        .sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
 
-.statement{
-    margin-top:15px;
-    color:#334155;
-    line-height:1.6;
-}
+        .statement {
+            margin-top: 15px;
+            color: #334155;
+            line-height: 1.6;
+        }
 
-.meta{
-    margin-top:12px;
-    font-size:13px;
-    color:#64748b;
-}
+        .meta {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #64748b;
+        }
 
-.actions{
-    margin-top:18px;
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-}
+        .actions {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
 
-.actions button{
-    border:none;
-    cursor:pointer;
-    padding:10px 14px;
-    border-radius:8px;
-    color:white;
-    font-weight:600;
-}
+        .actions button {
+            border: none;
+            cursor: pointer;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
 
-.submit{
-    background:#16a34a;
-}
+        .submit {
+            background: #16a34a;
+        }
 
-.submitted{
-    background:#2563eb;
-}
+        .submitted {
+            background: #2563eb;
+        }
 
-.notsubmitted{
-    background:#7c3aed;
-}
+        .notsubmitted {
+            background: #7c3aed;
+        }
 
-.delete{
-    background:#dc2626;
-}
+        .delete {
+            background: #dc2626;
+        }
 
-.create-btn{
-    position:fixed;
-    right:25px;
-    bottom:25px;
-    background:#2563eb;
-    color:white;
-    padding:16px 22px;
-    border-radius:50px;
-    text-decoration:none;
-    font-weight:600;
-    display:none;
-}
+        .create-btn {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            background: #2563eb;
+            color: white;
+            padding: 16px 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            display: none;
+        }
 
-</style>
+    </style>
 </head>
 <body>
 
@@ -125,106 +125,112 @@ body{
 <div id="assignments" class="container"></div>
 
 <a
-    href="/assignments/create/"
-    class="create-btn"
-    id="createBtn"
+        href="/assignments/create/"
+        class="create-btn"
+        id="createBtn"
 >
     + Create Assignment
 </a>
 
 <script>
 
-let user = {};
+    let user = {};
 
-function getCookie(name){
+    function getCookie(name) {
 
-    let value = null;
+        let value = null;
 
-    document.cookie.split(";").forEach(c=>{
+        document.cookie.split(";").forEach(c => {
 
-        if(c.trim().startsWith(name+"=")){
-            value = decodeURIComponent(
-                c.trim().split("=")[1]
-            );
-        }
-
-    });
-
-    return value;
-}
-
-function loadUser(){
-
-    return fetch("/core/api/dashboard/")
-    .then(r=>r.json())
-    .then(data=>{
-
-        user = data;
-
-        if(
-            user.role === "teacher" ||
-            user.is_superuser
-        ){
-            document
-            .getElementById("createBtn")
-            .style.display = "block";
-        }
-
-    });
-
-}
-
-function loadAssignments(){
-
-    fetch("/assignments/api/")
-    .then(r=>r.json())
-    .then(data=>{
-
-        let box =
-            document.getElementById(
-                "assignments"
-            );
-
-        box.innerHTML = "";
-
-        data.forEach(a=>{
-
-            let buttons = "";
-
-            if(user.role === "student"){
-
-                buttons = `
-                <button
-                    class="submit"
-                    onclick="submitAssignment(${a.id})">
-                    Submit Assignment
-                </button>
-                `;
-
-            }else{
-
-                buttons = `
-                <button
-                    class="submitted"
-                    onclick="submitted(${a.id})">
-                    Submitted
-                </button>
-
-                <button
-                    class="notsubmitted"
-                    onclick="notSubmitted(${a.id})">
-                    Not Submitted
-                </button>
-
-                <button
-                    class="delete"
-                    onclick="del(${a.id})">
-                    Delete
-                </button>
-                `;
+            if (c.trim().startsWith(name + "=")) {
+                value = decodeURIComponent(
+                    c.trim().split("=")[1]
+                );
             }
 
-            box.innerHTML += `
+        });
+
+        return value;
+    }
+
+    function loadUser() {
+
+        return fetch("/core/api/dashboard/")
+            .then(r => r.json())
+            .then(data => {
+
+                user = data;
+
+                if (
+                    user.role === "teacher" ||
+                    user.is_superuser
+                ) {
+                    document
+                        .getElementById("createBtn")
+                        .style.display = "block";
+                }
+
+            });
+
+    }
+
+    function loadAssignments() {
+
+        fetch("/assignments/api/")
+            .then(r => r.json())
+            .then(data => {
+
+                let box =
+                    document.getElementById(
+                        "assignments"
+                    );
+
+                box.innerHTML = "";
+
+                data.forEach(a => {
+
+                    let buttons = "";
+
+                    if (user.role === "student") {
+
+                        buttons = `
+                <button
+                    class="submit"
+                onclick="submitAssignment(${a.id})">
+                Submit Assignment
+                </button>
+            `;
+
+
+                    } else {
+
+                        let canManage =
+                            user.is_superuser ||
+                            a.creator_id === user.id;
+
+                        buttons = `
+    <button
+        class="submitted"
+        onclick="submitted(${a.id})">
+        Submitted
+    </button>
+
+    <button
+        class="notsubmitted"
+        onclick="notSubmitted(${a.id})">
+        Not Submitted
+    </button>
+
+    ${canManage ? `
+    <button
+        class="delete"
+        onclick="del(${a.id})">
+        Delete
+    </button>
+    ` : ""}
+    `;
+                    }
+                    box.innerHTML += `
             <div class="card">
 
                 <div class="title">
@@ -254,96 +260,96 @@ function loadAssignments(){
             </div>
             `;
 
-        });
+                });
 
-    });
+            });
 
-}
+    }
 
-function del(id){
+    function del(id) {
 
-    if(!confirm("Delete assignment?"))
-        return;
-
-    fetch(
-        `/assignments/api/delete/${id}/`,
-        {
-            method:"DELETE",
-
-            headers:{
-                "X-CSRFToken":
-                    getCookie("csrftoken")
-            }
-        }
-    )
-    .then(()=>loadAssignments());
-
-}
-
-function submitted(id){
-
-    window.location.href =
-        `/assignments/submitted/${id}/`;
-
-}
-
-function notSubmitted(id){
-
-    window.location.href =
-        `/assignments/not-submitted/${id}/`;
-
-}
-
-function submitAssignment(id){
-
-    let input =
-        document.createElement("input");
-
-    input.type = "file";
-
-    input.onchange = function(){
-
-        let file =
-            input.files[0];
-
-        let form =
-            new FormData();
-
-        form.append(
-            "file",
-            file
-        );
+        if (!confirm("Delete assignment?"))
+            return;
 
         fetch(
-            `/assignments/api/submit/${id}/`,
+            `/assignments/api/delete/${id}/`,
             {
-                method:"POST",
+                method: "DELETE",
 
-                headers:{
+                headers: {
                     "X-CSRFToken":
-                    getCookie("csrftoken")
-                },
-
-                body:form
+                        getCookie("csrftoken")
+                }
             }
         )
-        .then(r=>r.json())
-        .then(()=>{
+            .then(() => loadAssignments());
 
-            alert(
-                "Assignment submitted"
+    }
+
+    function submitted(id) {
+
+        window.location.href =
+            `/assignments/submitted/${id}/`;
+
+    }
+
+    function notSubmitted(id) {
+
+        window.location.href =
+            `/assignments/not-submitted/${id}/`;
+
+    }
+
+    function submitAssignment(id) {
+
+        let input =
+            document.createElement("input");
+
+        input.type = "file";
+
+        input.onchange = function () {
+
+            let file =
+                input.files[0];
+
+            let form =
+                new FormData();
+
+            form.append(
+                "file",
+                file
             );
 
-        });
+            fetch(
+                `/assignments/api/submit/${id}/`,
+                {
+                    method: "POST",
 
-    };
+                    headers: {
+                        "X-CSRFToken":
+                            getCookie("csrftoken")
+                    },
 
-    input.click();
+                    body: form
+                }
+            )
+                .then(r => r.json())
+                .then(() => {
 
-}
+                    alert(
+                        "Assignment submitted"
+                    );
 
-loadUser()
-.then(loadAssignments);
+                });
+
+        };
+
+        input.click();
+
+    }
+
+    loadUser()
+        .then(loadAssignments);
 
 </script>
 

@@ -13,6 +13,11 @@ class AssignmentSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    creator_id = serializers.IntegerField(
+        source="created_by.id",
+        read_only=True
+    )
+
     submitted_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -23,6 +28,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
             "title",
             "statement",
             "teacher_name",
+            "creator_id",
             "submitted_count",
             "created_at",
         ]
