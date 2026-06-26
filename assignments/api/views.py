@@ -1,48 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-from assignments.models import (
-    Assignment,
-    Submission
-)
-
-from assignments.api.serializers import (
-    AssignmentSerializer,
-    SubmissionSerializer
-)
-
-from accounts.models import (
-    StudentProfile
-)
-
-
-# =========================
-# LIST ASSIGNMENTS
-# =========================
+from assignments.models import Assignment,Submission
+from assignments.api.serializers import AssignmentSerializer,SubmissionSerializer
+from accounts.models import StudentProfile
 
 class AssignmentListAPI(APIView):
-
     def get(self, request):
-
-        assignments = Assignment.objects.all().order_by(
-            "-created_at"
-        )
-
+        assignments = Assignment.objects.all().order_by("-created_at")
         data = []
-
         for assignment in assignments:
-
             submitted = False
-
-            if (
-                request.user.is_authenticated
-                and request.user.role == "student"
-            ):
-                submitted = Submission.objects.filter(
-                    assignment=assignment,
-                    student=request.user
-                ).exists()
-
+            if (request.user.is_authenticated and request.user.role == "student"):
+                submitted = Submission.objects.filter(assignment=assignment,student=request.user).exists()
             data.append({
                 "id": assignment.id,
                 "title": assignment.title,
@@ -55,33 +24,18 @@ class AssignmentListAPI(APIView):
 
         return Response(data)
 
-
-# =========================
-# CREATE ASSIGNMENT
-# =========================
-
 class CreateAssignmentAPI(APIView):
 
     def post(self, request):
 
-        if not (
-            request.user.role == "teacher"
-            or request.user.is_superuser
-        ):
-            return Response(
-                {"error": "Permission denied"},
-                status=403
-            )
+        if not (request.user.role == "teacher" or request.user.is_superuser):
+            return Response({"error": "Permission denied"},status=403)
 
-        serializer = AssignmentSerializer(
-            data=request.data
-        )
+        serializer = AssignmentSerializer(data=request.data)
 
         if serializer.is_valid():
 
-            serializer.save(
-                created_by=request.user
-            )
+            serializer.save(created_by=request.user)
 
             return Response(
                 serializer.data,
@@ -93,9 +47,6 @@ class CreateAssignmentAPI(APIView):
             status=400
         )
 
-# =========================
-# DELETE ASSIGNMENT
-# =========================
 
 class DeleteAssignmentAPI(APIView):
 
@@ -129,9 +80,6 @@ class DeleteAssignmentAPI(APIView):
         )
 
 
-# =========================
-# SUBMIT ASSIGNMENT
-# =========================
 
 class SubmitAssignmentAPI(APIView):
 
@@ -182,9 +130,7 @@ class SubmitAssignmentAPI(APIView):
         )
 
 
-# =========================
-# SUBMITTED STUDENTS
-# =========================
+
 
 class SubmittedStudentsAPI(APIView):
 
@@ -227,9 +173,6 @@ class SubmittedStudentsAPI(APIView):
 
         return Response(data)
 
-# =========================
-# NOT SUBMITTED STUDENTS
-# =========================
 
 class NotSubmittedStudentsAPI(APIView):
 
@@ -271,9 +214,6 @@ class NotSubmittedStudentsAPI(APIView):
         return Response(data)
 
 
-# =========================
-# SUBMISSION DETAIL
-# =========================
 
 class SubmissionDetailAPI(APIView):
 

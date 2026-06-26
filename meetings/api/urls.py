@@ -10,7 +10,6 @@ urlpatterns = [
     path("", MeetingListAPI.as_view()),
     path("create/", CreateMeetingAPI.as_view()),
 
-    # NEW
     path("update/<int:pk>/", UpdateMeetingAPI.as_view()),
     path("delete/<int:pk>/", DeleteMeetingAPI.as_view()),
 ]

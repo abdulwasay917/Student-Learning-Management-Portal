@@ -4,27 +4,20 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import (
-    IsAdminUser,
-    AllowAny,
-    IsAuthenticated
-)
-
+from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
 from accounts.models import TeacherProfile, StudentProfile
 
-User = get_user_model()
 
+
+User = get_user_model()
 
 class CreateUserAPI(APIView):
     permission_classes = [IsAdminUser]
 
     def post(self, request):
-
         data = request.data
-
         role = data.get("role")
         username = data.get("username")
         email = data.get("email")
@@ -97,28 +90,14 @@ class LoginAPI(APIView):
         username = request.data.get("username")
         password = request.data.get("password")
 
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
+        user = authenticate(request,username=username,password=password)
 
         if not user:
-            return Response(
-                {"error": "Invalid credentials"},
-                status=400
-            )
+            return Response({"error": "Invalid credentials"},status=400)
 
         login(request, user)
 
-        return Response({
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "role": user.role
-            }
-        })
+        return Response({"message": "Login successful","user": {"id": user.id,"username": user.username,"role": user.role}})
 
 
 class LogoutAPI(APIView):
