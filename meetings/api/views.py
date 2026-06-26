@@ -7,9 +7,6 @@ from meetings.models import Meeting
 from .serializers import MeetingSerializer
 
 
-# =========================
-# LIST MEETINGS (ACTIVE ONLY)
-# =========================
 class MeetingListAPI(APIView):
 
     def get(self, request):
@@ -22,10 +19,6 @@ class MeetingListAPI(APIView):
 
         return Response(serializer.data)
 
-
-# =========================
-# CREATE MEETING
-# =========================
 class CreateMeetingAPI(APIView):
 
     def post(self, request):
@@ -52,9 +45,6 @@ class CreateMeetingAPI(APIView):
         return Response(serializer.errors, status=400)
 
 
-# =========================
-# UPDATE MEETING (EDIT)
-# =========================
 class UpdateMeetingAPI(APIView):
 
     def put(self, request, pk):
@@ -91,9 +81,6 @@ class UpdateMeetingAPI(APIView):
         return Response(serializer.errors, status=400)
 
 
-# =========================
-# DELETE MEETING
-# =========================
 class DeleteMeetingAPI(APIView):
 
     def delete(self, request, pk):
