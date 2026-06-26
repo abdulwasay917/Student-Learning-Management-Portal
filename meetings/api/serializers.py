@@ -4,10 +4,7 @@ from meetings.models import Meeting
 
 class MeetingSerializer(serializers.ModelSerializer):
 
-    teacher_name = serializers.CharField(
-        source="teacher.name",
-        read_only=True
-    )
+    teacher_name = serializers.CharField(source="teacher.name",read_only=True)
 
     class Meta:
         model = Meeting

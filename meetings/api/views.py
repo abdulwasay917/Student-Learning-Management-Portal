@@ -58,7 +58,6 @@ class UpdateMeetingAPI(APIView):
                 status=404
             )
 
-        # permission check
         if not (
             request.user.is_superuser
             or meeting.teacher == request.user

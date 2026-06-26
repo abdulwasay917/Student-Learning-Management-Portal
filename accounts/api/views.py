@@ -192,7 +192,7 @@ class StudentListAPI(APIView):
 
     def get(self, request):
 
-        if request.user.role == "student":
+        if request.user.role == "student" and  not request.user.is_superuser:
             return Response(
                 {"error": "Forbidden"},
                 status=403
