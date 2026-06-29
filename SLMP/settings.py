@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-unh4wd_u-vf+h16!%akt6av6dx!hjhkdpj5ndf^_8ne6uauhtf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -138,3 +138,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://crazed-shudder-finisher.ngrok-free.dev",
+]

@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
 from accounts.models import TeacherProfile, StudentProfile
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 
@@ -101,14 +103,12 @@ class LoginAPI(APIView):
 
 
 class LogoutAPI(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         logout(request)
-
-        return Response({
-            "message": "Logged out successfully"
-        })
+        request.session.flush()
+        return Response({"message": "logged out"})
 
 
 class ForgotPasswordAPI(APIView):
@@ -258,7 +258,6 @@ class DeleteUserAPI(APIView):
 
         try:
             user = User.objects.get(id=user_id)
-
         except User.DoesNotExist:
             return Response(
                 {"error": "User not found"},
@@ -272,7 +271,6 @@ class DeleteUserAPI(APIView):
             )
 
         user.delete()
-
         return Response({
             "message": "User deleted successfully"
         })
