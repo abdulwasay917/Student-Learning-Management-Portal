@@ -129,14 +129,32 @@ tr:hover{
 
 <script>
 
-fetch("/accounts/api/teachers/")
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+fetch("/accounts/api/teachers/", {
+    credentials: "include"
+})
 .then(res => res.json())
 .then(data => {
 
     let rows = "";
 
     if(data.length === 0){
-
         rows = `
             <tr>
                 <td colspan="6" class="empty">
@@ -156,8 +174,7 @@ fetch("/accounts/api/teachers/")
                 <td>${teacher.phone || "N/A"}</td>
                 <td>${teacher.expertise || "N/A"}</td>
                 <td>
-                    <button
-                        class="delete-btn"
+                    <button class="delete-btn"
                         onclick="deleteUser(${teacher.user_id})">
                         Delete
                     </button>
@@ -177,15 +194,21 @@ function deleteUser(userId){
     }
 
     fetch(`/accounts/api/delete-user/${userId}/`,{
-        method:"DELETE"
+        method:"DELETE",
+        credentials: "include",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Content-Type": "application/json"
+        }
     })
     .then(res => res.json())
     .then(data => {
-
         alert(data.message || data.error);
-
         location.reload();
-
+    })
+    .catch(err => {
+        console.log(err);
+        alert("Delete failed");
     });
 
 }
