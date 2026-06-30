@@ -8,7 +8,7 @@ def login_view(request):
     return render(request, "accounts/login.html")
 
 
-@login_required(login_url="/accounts/login/")
+
 def create_user_view(request):
     if request.method == "POST":
         pass
@@ -27,11 +27,11 @@ def reset_password_view(request, uidb64, token):
     return render(request, "accounts/reset_password.html")
 
 
-@login_required(login_url="/accounts/login/")
+
 def student_list_view(request):
     return render(request,"accounts/student_list.html")
 
 
-@login_required(login_url="/accounts/login/")
+
 def teacher_list_view(request):
     return render(request,"accounts/teacher_list.html")
