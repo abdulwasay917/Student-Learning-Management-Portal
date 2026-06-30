@@ -95,69 +95,62 @@ button:hover{
 
 <script>
 
-function getCookie(name){
-    let v=null;
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access");
 
-    document.cookie.split(";").forEach(c=>{
-
-        if(c.trim().startsWith(name+"=")){
-            v=decodeURIComponent(
-                c.trim().split("=")[1]
-            );
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
         }
-
     });
-
-    return v;
 }
 
-function createAssignment(){
 
-    fetch(
-        "/assignments/api/create/",
-        {
-            method:"POST",
+// ================= CREATE ASSIGNMENT =================
 
-            headers:{
-                "Content-Type":"application/json",
-                "X-CSRFToken":
-                    getCookie("csrftoken")
-            },
+function createAssignment() {
 
-            body:JSON.stringify({
-                title:
-                    document.getElementById("title").value,
+    const title = document.getElementById("title").value.trim();
+    const statement = document.getElementById("statement").value.trim();
 
-                statement:
-                    document.getElementById("statement").value
-            })
-        }
-    )
+    if (!title || !statement) {
+        alert("Please fill all fields");
+        return;
+    }
 
-    .then(async r => {
-        let data = await r.json();
-        return { status: r.status, data };
+    authFetch("/assignments/api/create/", {
+        method: "POST",
+        body: JSON.stringify({
+            title: title,
+            statement: statement
+        })
     })
+    .then(async res => {
 
-    .then(res => {
+        const data = await res.json();
 
-        if(res.status !== 201){
-            alert(res.data.error || "Something went wrong");
+        if (res.status === 401) {
+            alert("Session expired. Please login again.");
+            window.location.href = "/accounts/login/";
             return;
         }
 
-        alert("Assignment created");
+        if (!res.ok) {
+            alert(data.error || data.detail || "Something went wrong");
+            return;
+        }
 
-
+        alert("Assignment created successfully");
         window.location.href = "/assignments/";
 
     })
-
     .catch(err => {
         console.log(err);
         alert("Server error");
     });
-
 }
 
 </script>

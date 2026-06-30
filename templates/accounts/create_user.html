@@ -1,13 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create User</title>
-
     <style>
-
         * {
             margin: 0;
             padding: 0;
@@ -20,7 +17,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #34cab9, #361e3b, #413355);
+            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
             padding: 20px;
         }
 
@@ -114,13 +111,8 @@
             min-height: 20px;
         }
 
-        .success {
-            color: #16a34a;
-        }
-
-        .error {
-            color: #dc2626;
-        }
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
 
         .footer-text {
             margin-top: 20px;
@@ -130,24 +122,13 @@
         }
 
         @media (max-width: 768px) {
-
-            .create-card {
-                padding: 30px;
-            }
-
-            .logo h2 {
-                font-size: 26px;
-            }
+            .create-card { padding: 30px; }
+            .logo h2 { font-size: 26px; }
         }
-
     </style>
-
 </head>
 <body>
-
 <div class="create-card">
-
-    ```
     <div class="logo">
         <h2>Create User</h2>
         <p>Create Teacher or Student Account</p>
@@ -157,327 +138,131 @@
 
     <div class="form-group">
         <label>Select Role</label>
-
-        <select
-                id="role"
-                class="form-control"
-                onchange="toggleFields()">
-
-            <option value="">
-                Select Role
-            </option>
-
-            <option value="teacher">
-                Teacher
-            </option>
-
-            <option value="student">
-                Student
-            </option>
-
+        <select id="role" class="form-control" onchange="toggleFields()">
+            <option value="">Select Role</option>
+            <option value="teacher">Teacher</option>
+            <option value="student">Student</option>
         </select>
     </div>
 
     <div class="form-group">
         <label>Full Name</label>
-
-        <input
-                type="text"
-                id="name"
-                class="form-control"
-                placeholder="Enter full name">
+        <input type="text" id="name" class="form-control" placeholder="Enter full name">
     </div>
 
     <div class="form-group">
         <label>Username</label>
-
-        <input
-                type="text"
-                id="username"
-                class="form-control"
-                placeholder="Enter username">
+        <input type="text" id="username" class="form-control" placeholder="Enter username">
     </div>
 
     <div class="form-group">
         <label>Email</label>
-
-        <input
-                type="email"
-                id="email"
-                class="form-control"
-                placeholder="Enter email">
+        <input type="email" id="email" class="form-control" placeholder="Enter email">
     </div>
 
     <div class="form-group">
         <label>Password</label>
-
-        <input
-                type="password"
-                id="password"
-                class="form-control"
-                placeholder="Enter password">
+        <input type="password" id="password" class="form-control" placeholder="Enter password">
     </div>
 
     <div class="form-group">
         <label>Phone Number</label>
-
-        <input
-                type="text"
-                id="phone"
-                class="form-control"
-                placeholder="Enter phone number">
+        <input type="text" id="phone" class="form-control" placeholder="Enter phone number">
     </div>
 
-    <div
-            id="teacher-fields"
-            class="role-section"
-            style="display:none;">
-
+    <div id="teacher-fields" class="role-section" style="display:none;">
         <h3>Teacher Information</h3>
-
         <div class="form-group">
             <label>Bio</label>
-
-            <textarea
-                    id="bio"
-                    class="form-control"
-                    rows="4"
-                    placeholder="Teacher bio"></textarea>
+            <textarea id="bio" class="form-control" rows="4" placeholder="Teacher bio"></textarea>
         </div>
-
         <div class="form-group">
             <label>Expertise</label>
-
-            <input
-                    type="text"
-                    id="expertise"
-                    class="form-control"
-                    placeholder="Enter expertise">
+            <input type="text" id="expertise" class="form-control" placeholder="Enter expertise">
         </div>
-
     </div>
 
-    <div
-            id="student-fields"
-            class="role-section"
-            style="display:none;">
-
+    <div id="student-fields" class="role-section" style="display:none;">
         <h3>Student Information</h3>
-
         <div class="form-group">
             <label>Roll Number</label>
-
-            <input
-                    type="text"
-                    id="roll_number"
-                    class="form-control"
-                    placeholder="Enter roll number">
+            <input type="text" id="roll_number" class="form-control" placeholder="Enter roll number">
         </div>
-
     </div>
 
-    <button
-            class="submit-btn"
-            onclick="createUser()">
-
-        Create User
-
-    </button>
-
+    <button class="submit-btn" onclick="createUser()">Create User</button>
     <p id="msg"></p>
-
-    <div class="footer-text">
-        LMS Administration Panel
-    </div>
-    ```
-
+    <div class="footer-text">LMS Administration Panel</div>
 </div>
 
 <script>
-
-    function getCookie(name) {
-
-        let cookieValue = null;
-
-        if (document.cookie && document.cookie !== '') {
-
-            const cookies =
-                document.cookie.split(';');
-
-            for (let i = 0; i < cookies.length; i++) {
-
-                const cookie =
-                    cookies[i].trim();
-
-                if (
-                    cookie.substring(
-                        0,
-                        name.length + 1
-                    ) === (name + '=')
-                ) {
-
-                    cookieValue =
-                        decodeURIComponent(
-                            cookie.substring(
-                                name.length + 1
-                            )
-                        );
-
-                    break;
-                }
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-
-        return cookieValue;
     }
+    return cookieValue;
+}
 
-    function toggleFields() {
+function toggleFields() {
+    const role = document.getElementById("role").value;
+    document.getElementById("teacher-fields").style.display = "none";
+    document.getElementById("student-fields").style.display = "none";
 
-        const role =
-            document.getElementById("role").value;
-
-        document.getElementById(
-            "teacher-fields"
-        ).style.display = "none";
-
-        document.getElementById(
-            "student-fields"
-        ).style.display = "none";
-
-        if (role === "teacher") {
-
-            document.getElementById(
-                "teacher-fields"
-            ).style.display = "block";
-        }
-
-        if (role === "student") {
-
-            document.getElementById(
-                "student-fields"
-            ).style.display = "block";
-        }
+    if (role === "teacher") {
+        document.getElementById("teacher-fields").style.display = "block";
     }
+    if (role === "student") {
+        document.getElementById("student-fields").style.display = "block";
+    }
+}
 
-    function createUser() {
+function createUser() {
+    const token = localStorage.getItem("access");
 
-        const role =
-            document.getElementById("role").value;
-
-        let payload = {
-
-            role: role,
-
-            name:
-            document.getElementById(
-                "name"
-            ).value,
-
-            username:
-            document.getElementById(
-                "username"
-            ).value,
-
-            email:
-            document.getElementById(
-                "email"
-            ).value,
-
-            password:
-            document.getElementById(
-                "password"
-            ).value,
-
-            phone:
-            document.getElementById(
-                "phone"
-            ).value
-        };
-
-        if (role === "teacher") {
-
-            payload.bio =
-                document.getElementById(
-                    "bio"
-                ).value;
-
-            payload.expertise =
-                document.getElementById(
-                    "expertise"
-                ).value;
-        }
-
-        if (role === "student") {
-
-            payload.roll_number =
-                document.getElementById(
-                    "roll_number"
-                ).value;
-        }
-
-        fetch("/accounts/api/create-user/", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken":
-                    getCookie("csrftoken")
-            },
-
-            body: JSON.stringify(payload)
-
+    fetch("/accounts/api/create-user/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+            "Authorization": token ? ("Bearer " + token) : ""
+        },
+        body: JSON.stringify({
+            role: document.getElementById("role").value,
+            name: document.getElementById("name").value,
+            username: document.getElementById("username").value,
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            phone: document.getElementById("phone").value,
+            bio: document.getElementById("bio")?.value || "",
+            expertise: document.getElementById("expertise")?.value || "",
+            roll_number: document.getElementById("roll_number")?.value || ""
         })
+    })
+    .then(async res => {
+        const data = await res.json();
+        const msg = document.getElementById("msg");
+        msg.className = res.ok ? "success" : "error";
+        msg.innerText = data.message || data.error || data.detail || "Something went wrong";
 
-            .then(async res => {
-
-                const data =
-                    await res.json();
-
-                const msg =
-                    document.getElementById("msg");
-
-                if (res.ok) {
-
-                    msg.className = "success";
-
-                    msg.innerText =
-                        data.message ||
-                        "User created successfully";
-
-                    setTimeout(() => {
-                        window.location.href =
-                            "/core/dashboard/";
-                    }, 1000);
-
-                } else {
-
-                    msg.className = "error";
-
-                    msg.innerText =
-                        data.error ||
-                        data.detail ||
-                        "Something went wrong";
-                }
-
-            })
-
-            .catch(error => {
-
-                console.log(error);
-
-                const msg =
-                    document.getElementById("msg");
-
-                msg.className = "error";
-
-                msg.innerText =
-                    "Request failed";
-
-            });
-    }
-
+        if (res.ok) {
+            setTimeout(() => {
+                window.location.href = "/core/dashboard/";
+            }, 1000);
+        }
+    })
+    .catch(() => {
+        document.getElementById("msg").className = "error";
+        document.getElementById("msg").innerText = "Request failed";
+    });
+}
 </script>
-
 </body>
 </html>

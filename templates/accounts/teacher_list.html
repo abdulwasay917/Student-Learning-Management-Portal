@@ -129,32 +129,42 @@ tr:hover{
 
 <script>
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access");
 
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
         }
-    }
-    return cookieValue;
+    });
 }
 
-fetch("/accounts/api/teachers/", {
+// ================= LOAD TEACHERS =================
+
+authFetch("/accounts/api/teachers/", {
     credentials: "include"
 })
-.then(res => res.json())
+.then(async res => {
+
+    if (!res.ok) {
+        if (res.status === 401) {
+            alert("Session expired or unauthorized. Please login again.");
+            window.location.href = "/accounts/login/";
+            return;
+        }
+        throw new Error("Failed to load teachers");
+    }
+
+    return res.json();
+})
 .then(data => {
 
     let rows = "";
 
-    if(data.length === 0){
+    if (!data || data.length === 0) {
         rows = `
             <tr>
                 <td colspan="6" class="empty">
@@ -162,6 +172,8 @@ fetch("/accounts/api/teachers/", {
                 </td>
             </tr>
         `;
+        document.getElementById("teachers-table").innerHTML = rows;
+        return;
     }
 
     data.forEach(teacher => {
@@ -185,30 +197,50 @@ fetch("/accounts/api/teachers/", {
 
     document.getElementById("teachers-table").innerHTML = rows;
 
+})
+.catch(error => {
+
+    console.log(error);
+
+    document.getElementById("teachers-table").innerHTML = `
+        <tr>
+            <td colspan="6" class="empty">
+                Failed to load teachers
+            </td>
+        </tr>
+    `;
 });
+
+
+// ================= DELETE USER =================
 
 function deleteUser(userId){
 
-    if(!confirm("Delete this teacher?")){
-        return;
-    }
+    if(!confirm("Delete this teacher?")) return;
 
-    fetch(`/accounts/api/delete-user/${userId}/`,{
-        method:"DELETE",
-        credentials: "include",
+    const token = localStorage.getItem("access");
+
+    fetch(`/accounts/api/delete-user/${userId}/`, {
+        method: "DELETE",
         headers: {
-            "X-CSRFToken": getCookie("csrftoken"),
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": "Bearer " + token } : {})
         }
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message || data.error);
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.error || "Delete failed");
+            return;
+        }
+
+        alert(data.message || "Deleted successfully");
         location.reload();
     })
     .catch(err => {
         console.log(err);
-        alert("Delete failed");
+        alert("Request failed");
     });
 
 }

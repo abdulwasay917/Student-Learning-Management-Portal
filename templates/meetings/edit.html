@@ -111,23 +111,43 @@ button:hover{
 
 <script>
 
+const access = localStorage.getItem("access");
+
+function authFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    }).then(async res => {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401) {
+            window.location.href = "/accounts/login/";
+        }
+
+        return { res, data };
+    });
+}
+
 let id = window.location.pathname.split("/").filter(Boolean).pop();
 
 /* CSRF */
 function getCookie(name){
-    let v=null;
+    let v = null;
     document.cookie.split(';').forEach(c=>{
         if(c.trim().startsWith(name+'=')){
-            v=decodeURIComponent(c.trim().split('=')[1]);
+            v = decodeURIComponent(c.trim().split('=')[1]);
         }
     });
     return v;
 }
 
-/* Load existing data */
-fetch("/meetings/api/")
-.then(r=>r.json())
-.then(data=>{
+/* Load existing meeting */
+authFetch("/meetings/api/")
+.then(({data}) => {
 
     let meeting = data.find(x => x.id == id);
 
@@ -140,10 +160,9 @@ fetch("/meetings/api/")
     document.getElementById("link").value = meeting.link;
 
     document.getElementById("loading").style.display = "none";
-
 });
 
-/* Update */
+/* Update meeting */
 function updateMeeting(){
 
     let title = document.getElementById("title").value;
@@ -155,32 +174,30 @@ function updateMeeting(){
         return;
     }
 
-    fetch(`/meetings/api/update/${id}/`,{
-        method:"PUT",
-        headers:{
-            "Content-Type":"application/json",
-            "X-CSRFToken":getCookie("csrftoken")
+    authFetch(`/meetings/api/update/${id}/`, {
+        method: "PUT",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
         },
-        body:JSON.stringify({
-            title:title,
-            link:link
+        body: JSON.stringify({
+            title,
+            link
         })
     })
-    .then(async res=>{
-
-        let data = await res.json();
+    .then(({res, data}) => {
 
         if(res.ok){
             document.getElementById("msg").style.color = "#16a34a";
-            document.getElementById("msg").innerText = "Meeting updated successfully!";
-        }
-        else{
+            document.getElementById("msg").innerText =
+                "Meeting updated successfully!";
+        } else {
             document.getElementById("msg").style.color = "#dc2626";
-            document.getElementById("msg").innerText = data.error || "Update failed";
+            document.getElementById("msg").innerText =
+                data.error || "Update failed";
         }
 
     })
-    .catch(()=>{
+    .catch(() => {
         document.getElementById("msg").style.color = "#dc2626";
         document.getElementById("msg").innerText = "Network error";
     });

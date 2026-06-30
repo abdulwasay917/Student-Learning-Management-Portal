@@ -92,11 +92,32 @@ button:hover{
 
 <script>
 
+const access = localStorage.getItem("access");
+
+function authFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    }).then(async res => {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.status === 401) {
+            window.location.href = "/accounts/login/";
+        }
+
+        return { res, data };
+    });
+}
+
 function getCookie(n){
-    let v=null;
-    document.cookie.split(';').forEach(c=>{
-        if(c.trim().startsWith(n+'=')){
-            v=decodeURIComponent(c.split('=')[1]);
+    let v = null;
+    document.cookie.split(';').forEach(c => {
+        if(c.trim().startsWith(n + '=')){
+            v = decodeURIComponent(c.split('=')[1]);
         }
     });
     return v;
@@ -104,48 +125,39 @@ function getCookie(n){
 
 function createMeeting(){
 
-    fetch("/meetings/api/create/",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json",
-            "X-CSRFToken":getCookie("csrftoken")
+    authFetch("/meetings/api/create/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
         },
-        body:JSON.stringify({
-            title:document.getElementById("title").value,
-            link:document.getElementById("link").value
+        body: JSON.stringify({
+            title: document.getElementById("title").value,
+            link: document.getElementById("link").value
         })
     })
 
-    .then(async r=>{
-        let data = await r.json();
-        return {status:r.status,data};
-    })
-
-    .then(res=>{
+    .then(({res, data}) => {
 
         if(res.status !== 201){
-            document.getElementById("msg").style.color="red";
+            document.getElementById("msg").style.color = "red";
             document.getElementById("msg").innerText =
-                res.data.error || "Something went wrong";
+                data.error || "Something went wrong";
             return;
         }
 
-        document.getElementById("msg").style.color="#16a34a";
+        document.getElementById("msg").style.color = "#16a34a";
         document.getElementById("msg").innerText = "Meeting created! Redirecting...";
 
-        // ✅ redirect after short delay
-        setTimeout(()=>{
-            window.location.href="/meetings/";
+        setTimeout(() => {
+            window.location.href = "/meetings/";
         }, 800);
-
     })
 
-    .catch(err=>{
+    .catch(err => {
         console.log(err);
-        document.getElementById("msg").style.color="red";
-        document.getElementById("msg").innerText="Server error";
+        document.getElementById("msg").style.color = "red";
+        document.getElementById("msg").innerText = "Server error";
     });
-
 }
 
 </script>

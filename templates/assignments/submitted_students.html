@@ -82,34 +82,46 @@ body{
 
 <script>
 
-const assignmentId =
-window.location.pathname.split("/")[3];
+const access = localStorage.getItem("access");
 
-fetch(
-    `/assignments/api/submitted/${assignmentId}/`
-)
-.then(r=>r.json())
-.then(data=>{
+function authFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    }).then(async res => {
+        const data = await res.json().catch(() => ({}));
 
-    let rows =
-        document.getElementById("rows");
+        if (res.status === 401) {
+            window.location.href = "/accounts/login/";
+        }
 
-    data.forEach(student=>{
+        return { res, data };
+    });
+}
+
+const assignmentId = window.location.pathname.split("/")[3];
+
+authFetch(`/assignments/api/submitted/${assignmentId}/`)
+.then(({data}) => {
+
+    let rows = document.getElementById("rows");
+    rows.innerHTML = "";
+
+    data.forEach(student => {
 
         rows.innerHTML += `
         <div class="row">
 
-            <div>
-                ${student.student_name}
-            </div>
+            <div>${student.student_name}</div>
+
+            <div>${student.roll_number}</div>
 
             <div>
-                ${student.roll_number}
-            </div>
-
-            <div>
-                <button
-                    class="btn"
+                <button class="btn"
                     onclick="viewSubmission(${student.submission_id})">
                     View
                 </button>
@@ -117,16 +129,12 @@ fetch(
 
         </div>
         `;
-
     });
 
 });
 
 function viewSubmission(id){
-
-    window.location.href =
-    "/assignments/submission/" + id + "/";
-
+    window.location.href = "/assignments/submission/" + id + "/";
 }
 
 </script>

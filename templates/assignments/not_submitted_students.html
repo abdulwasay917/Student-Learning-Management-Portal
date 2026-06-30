@@ -73,46 +73,76 @@ body{
 
 <script>
 
-const assignmentId =
-window.location.pathname.split("/")[3];
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access");
 
-fetch(
-    `/assignments/api/not-submitted/${assignmentId}/`
-)
-.then(r=>r.json())
-.then(data=>{
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+    });
+}
 
-    let rows =
-        document.getElementById("rows");
+// ================= GET ASSIGNMENT ID =================
 
-    if(data.length === 0){
+const assignmentId = window.location.pathname.split("/")[3];
+
+const rows = document.getElementById("rows");
+
+// ================= LOAD DATA =================
+
+authFetch(`/assignments/api/not-submitted/${assignmentId}/`)
+.then(async res => {
+
+    if (res.status === 401) {
+        alert("Session expired. Please login again.");
+        window.location.href = "/accounts/login/";
+        return;
+    }
+
+    return res.json();
+})
+.then(data => {
+
+    rows.innerHTML = "";
+
+    if (!data || data.length === 0) {
 
         rows.innerHTML = `
-        <div class="empty">
-            All students have submitted this assignment.
-        </div>
+            <div class="empty">
+                All students have submitted this assignment.
+            </div>
         `;
 
         return;
     }
 
-    data.forEach(student=>{
+    data.forEach(student => {
 
         rows.innerHTML += `
-        <div class="row">
+            <div class="row">
 
-            <div>
-                ${student.student_name}
+                <div>${student.student_name}</div>
+
+                <div>${student.roll_number}</div>
+
             </div>
-
-            <div>
-                ${student.roll_number}
-            </div>
-
-        </div>
         `;
-
     });
+
+})
+.catch(err => {
+
+    console.log(err);
+
+    rows.innerHTML = `
+        <div class="empty">
+            Failed to load data
+        </div>
+    `;
 
 });
 

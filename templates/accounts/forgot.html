@@ -183,26 +183,21 @@ body{
 <script>
 function getCookie(name) {
     let cookieValue = null;
-
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
-
         for (let i = 0; i < cookies.length; i++) {
             const cookie = cookies[i].trim();
-
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(
-                    cookie.substring(name.length + 1)
-                );
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
-
     return cookieValue;
 }
 
 function sendReset() {
+
     fetch("/accounts/api/forgot-password/", {
         method: "POST",
         headers: {
@@ -213,28 +208,17 @@ function sendReset() {
             email: document.getElementById("email").value
         })
     })
-    .then(async res => {
-        const data = await res.json();
-
-        if (res.ok) {
-            document.getElementById("msg").style.color = "#16a34a";
-        } else {
-            document.getElementById("msg").style.color = "#dc2626";
-        }
+    .then(res => res.json())
+    .then(data => {
 
         document.getElementById("msg").innerText =
-            data.message ||
-            data.error ||
-            data.detail ||
-            "Something went wrong";
+            data.message || data.error || "Done";
 
-        console.log("Status:", res.status);
-        console.log(data);
+        document.getElementById("msg").style.color =
+            data.message ? "green" : "red";
     })
-    .catch(err => {
-        console.log(err);
-        document.getElementById("msg").style.color = "#dc2626";
-        document.getElementById("msg").innerText = "Request failed";
+    .catch(() => {
+        document.getElementById("msg").innerText = "Error";
     });
 }
 </script>

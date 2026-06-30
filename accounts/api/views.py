@@ -4,16 +4,18 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser,AllowAny,IsAuthenticated
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import status
+
 from accounts.models import TeacherProfile, StudentProfile
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-
-
 
 User = get_user_model()
+
 
 class CreateUserAPI(APIView):
     permission_classes = [IsAdminUser]
@@ -28,28 +30,16 @@ class CreateUserAPI(APIView):
         phone = data.get("phone")
 
         if not role:
-            return Response(
-                {"error": "Role is required"},
-                status=400
-            )
+            return Response({"error": "Role is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         if role not in ["teacher", "student"]:
-            return Response(
-                {"error": "Invalid role"},
-                status=400
-            )
+            return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(username=username).exists():
-            return Response(
-                {"error": "Username already exists"},
-                status=400
-            )
+            return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(email=email).exists():
-            return Response(
-                {"error": "Email already exists"},
-                status=400
-            )
+            return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
             username=username,
@@ -61,26 +51,20 @@ class CreateUserAPI(APIView):
         )
 
         if role == "teacher":
-
             TeacherProfile.objects.create(
                 user=user,
                 bio=data.get("bio", ""),
                 expertise=data.get("expertise", "")
             )
-
         else:
-
             StudentProfile.objects.create(
                 user=user,
-                roll_number=data.get("roll_number")
+                roll_number=data.get("roll_number", "")
             )
 
         return Response(
-            {
-                "message": f"{role.title()} created successfully",
-                "user_id": user.id
-            },
-            status=201
+            {"message": f"{role.title()} created successfully", "user_id": user.id},
+            status=status.HTTP_201_CREATED
         )
 
 
@@ -88,54 +72,59 @@ class LoginAPI(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         username = request.data.get("username")
         password = request.data.get("password")
 
-        user = authenticate(request,username=username,password=password)
-
+        user = authenticate(request, username=username, password=password)
         if not user:
-            return Response({"error": "Invalid credentials"},status=400)
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
         login(request, user)
+        refresh = RefreshToken.for_user(user)
 
-        return Response({"message": "Login successful","user": {"id": user.id,"username": user.username,"role": user.role}})
+        return Response({
+            "message": "Login successful",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "role": user.role
+            }
+        }, status=status.HTTP_200_OK)
 
 
 class LogoutAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+        except Exception:
+            pass
+
         logout(request)
         request.session.flush()
-        return Response({"message": "logged out"})
+        return Response({"message": "logged out"}, status=status.HTTP_200_OK)
 
 
 class ForgotPasswordAPI(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-
         email = request.data.get("email")
 
         try:
             user = User.objects.get(email=email)
-
         except User.DoesNotExist:
-            return Response(
-                {"error": "User not found"},
-                status=400
-            )
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-        uid = urlsafe_base64_encode(
-            force_bytes(user.pk)
-        )
-
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-
-        link = request.build_absolute_uri(
-            f"/accounts/reset-password/{uid}/{token}/"
-        )
+        link = request.build_absolute_uri(f"/accounts/reset-password/{uid}/{token}/")
 
         send_mail(
             "Reset Password",
@@ -145,65 +134,38 @@ class ForgotPasswordAPI(APIView):
             fail_silently=False
         )
 
-        return Response({
-            "message": "Reset link sent to email"
-        })
+        return Response({"message": "Reset link sent to email"}, status=status.HTTP_200_OK)
 
 
 class ResetPasswordAPI(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
-
         password = request.data.get("password")
 
         try:
-            uid = urlsafe_base64_decode(
-                uidb64
-            ).decode()
-
+            uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
-
         except Exception:
-            return Response(
-                {"error": "Invalid link"},
-                status=400
-            )
+            return Response({"error": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not default_token_generator.check_token(
-            user,
-            token
-        ):
-            return Response(
-                {"error": "Invalid or expired token"},
-                status=400
-            )
+        if not default_token_generator.check_token(user, token):
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(password)
         user.save()
 
-        return Response({
-            "message": "Password reset successful"
-        })
+        return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
 
 
 class StudentListAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        if request.user.role == "student" and not request.user.is_superuser:
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
-        if request.user.role == "student" and  not request.user.is_superuser:
-            return Response(
-                {"error": "Forbidden"},
-                status=403
-            )
-
-        students = StudentProfile.objects.select_related(
-            "user"
-        ).filter(
-            user__is_superuser=False
-        )
-
+        students = StudentProfile.objects.select_related("user").filter(user__is_superuser=False)
         data = [
             {
                 "id": s.id,
@@ -217,23 +179,17 @@ class StudentListAPI(APIView):
             for s in students
         ]
 
-        return Response({
-            "is_superuser": request.user.is_superuser,
-            "students": data
-        })
+        return Response(
+            {"is_superuser": request.user.is_superuser, "students": data},
+            status=status.HTTP_200_OK
+        )
 
 
 class TeacherListAPI(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-
-        teachers = TeacherProfile.objects.select_related(
-            "user"
-        ).filter(
-            user__is_superuser=False
-        )
-
+        teachers = TeacherProfile.objects.select_related("user").filter(user__is_superuser=False)
         data = [
             {
                 "id": t.id,
@@ -247,30 +203,22 @@ class TeacherListAPI(APIView):
             }
             for t in teachers
         ]
-
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class DeleteUserAPI(APIView):
     permission_classes = [IsAdminUser]
 
     def delete(self, request, user_id):
-
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return Response(
-                {"error": "User not found"},
-                status=404
-            )
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if user.is_superuser:
-            return Response(
-                {"error": "Superuser cannot be deleted"},
-                status=403
-            )
+            return Response({"error": "Superuser cannot be deleted"}, status=status.HTTP_403_FORBIDDEN)
 
         user.delete()
-        return Response({
-            "message": "User deleted successfully"
-        })
+        return Response({"message": "User deleted successfully"}, status=status.HTTP_200_OK)
+
+

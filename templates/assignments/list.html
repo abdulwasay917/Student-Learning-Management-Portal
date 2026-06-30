@@ -134,235 +134,196 @@
 
 <script>
 
-    let user = {};
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access");
 
-    function getCookie(name) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+    });
+}
 
-        let value = null;
+let user = {};
 
-        document.cookie.split(";").forEach(c => {
+// ================= GET USER =================
 
-            if (c.trim().startsWith(name + "=")) {
-                value = decodeURIComponent(
-                    c.trim().split("=")[1]
-                );
+function loadUser() {
+    return authFetch("/core/api/dashboard/")
+        .then(async res => {
+
+            if (res.status === 401) {
+                window.location.href = "/accounts/login/";
+                return;
+            }
+
+            return res.json();
+        })
+        .then(data => {
+
+            user = data;
+
+            if (!user) return;
+
+            if (user.role === "teacher" || user.is_superuser) {
+                document.getElementById("createBtn").style.display = "block";
             }
 
         });
+}
 
-        return value;
-    }
 
-    function loadUser() {
+// ================= LOAD ASSIGNMENTS =================
 
-        return fetch("/core/api/dashboard/")
-            .then(r => r.json())
-            .then(data => {
+function loadAssignments() {
 
-                user = data;
+    authFetch("/assignments/api/")
+        .then(async r => {
 
-                if (
-                    user.role === "teacher" ||
-                    user.is_superuser
-                ) {
-                    document
-                        .getElementById("createBtn")
-                        .style.display = "block";
-                }
-
-            });
-
-    }
-
-    function loadAssignments() {
-
-        fetch("/assignments/api/")
-            .then(r => r.json())
-            .then(data => {
-
-                let box =
-                    document.getElementById(
-                        "assignments"
-                    );
-
-                box.innerHTML = "";
-
-                data.forEach(a => {
-
-                    let buttons = "";
-
-                    if (user.role === "student") {
-
-                        if (a.submitted) {
-
-                            buttons = `
-            <button
-                class="submitted"
-                onclick="submitAssignment(${a.id})">
-                Edit Submission
-            </button>
-        `;
-
-                        } else {
-
-                            buttons = `
-            <button
-                class="submit"
-                onclick="submitAssignment(${a.id})">
-                Submit Assignment
-            </button>
-        `;
-                        }
-                    } else {
-
-                        let canManage =
-                            user.is_superuser ||
-                            a.creator_id === user.id;
-
-                        buttons = `
-    <button
-        class="submitted"
-        onclick="submitted(${a.id})">
-        Submitted
-    </button>
-
-    <button
-        class="notsubmitted"
-        onclick="notSubmitted(${a.id})">
-        Not Submitted
-    </button>
-
-    ${canManage ? `
-    <button
-        class="delete"
-        onclick="del(${a.id})">
-        Delete
-    </button>
-    ` : ""}
-    `;
-                    }
-                    box.innerHTML += `
-            <div class="card">
-
-                <div class="title">
-                    ${a.title}
-                </div>
-
-                <div class="sub">
-                    Teacher:
-                    ${a.teacher_name}
-                </div>
-
-                <div class="statement">
-                    ${a.statement}
-                </div>
-
-                <div class="meta">
-                    Created:
-                    ${new Date(
-                        a.created_at
-                    ).toLocaleString()}
-                </div>
-
-                <div class="actions">
-                    ${buttons}
-                </div>
-
-            </div>
-            `;
-
-                });
-
-            });
-
-    }
-
-    function del(id) {
-
-        if (!confirm("Delete assignment?"))
-            return;
-
-        fetch(
-            `/assignments/api/delete/${id}/`,
-            {
-                method: "DELETE",
-
-                headers: {
-                    "X-CSRFToken":
-                        getCookie("csrftoken")
-                }
+            if (r.status === 401) {
+                alert("Session expired");
+                window.location.href = "/accounts/login/";
+                return;
             }
-        )
-            .then(() => loadAssignments());
 
-    }
+            return r.json();
+        })
+        .then(data => {
 
-    function submitted(id) {
+            let box = document.getElementById("assignments");
+            box.innerHTML = "";
 
-        window.location.href =
-            `/assignments/submitted/${id}/`;
+            if (!data || data.length === 0) {
+                box.innerHTML = "<p>No assignments found</p>";
+                return;
+            }
 
-    }
+            data.forEach(a => {
 
-    function notSubmitted(id) {
+                let buttons = "";
 
-        window.location.href =
-            `/assignments/not-submitted/${id}/`;
+                if (user.role === "student") {
 
-    }
-
-    function submitAssignment(id) {
-
-        let input =
-            document.createElement("input");
-
-        input.type = "file";
-
-        input.onchange = function () {
-
-            let file =
-                input.files[0];
-
-            let form =
-                new FormData();
-
-            form.append(
-                "file",
-                file
-            );
-
-            fetch(
-                `/assignments/api/submit/${id}/`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "X-CSRFToken":
-                            getCookie("csrftoken")
-                    },
-
-                    body: form
+                    buttons = a.submitted
+                        ? `<button class="submitted" onclick="submitAssignment(${a.id})">Edit Submission</button>`
+                        : `<button class="submit" onclick="submitAssignment(${a.id})">Submit Assignment</button>`;
                 }
-            )
-                .then(r => r.json())
-                .then(() => {
+                else {
 
-                    alert(
-                        "Assignment submitted"
-                    );
+                    let canManage =
+                        user.is_superuser ||
+                        user.id === a.creator_id;
 
-                    loadAssignments();
+                    buttons = `
+                        <button class="submitted" onclick="submitted(${a.id})">Submitted</button>
+                        <button class="notsubmitted" onclick="notSubmitted(${a.id})">Not Submitted</button>
+                        ${canManage ? `<button class="delete" onclick="del(${a.id})">Delete</button>` : ""}
+                    `;
+                }
 
-                });
+                box.innerHTML += `
+                    <div class="card">
 
-        };
+                        <div class="title">${a.title}</div>
 
-        input.click();
+                        <div class="sub">
+                            Teacher: ${a.teacher_name}
+                        </div>
 
-    }
+                        <div class="statement">
+                            ${a.statement}
+                        </div>
 
-    loadUser()
-        .then(loadAssignments);
+                        <div class="meta">
+                            Created: ${new Date(a.created_at).toLocaleString()}
+                        </div>
+
+                        <div class="actions">
+                            ${buttons}
+                        </div>
+
+                    </div>
+                `;
+            });
+
+        })
+        .catch(err => {
+            console.log(err);
+        });
+}
+
+
+// ================= DELETE =================
+
+function del(id) {
+
+    if (!confirm("Delete assignment?")) return;
+
+    const token = localStorage.getItem("access");
+
+    fetch(`/assignments/api/delete/${id}/`, {
+        method: "DELETE",
+        headers: {
+            ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+    })
+    .then(res => res.json())
+    .then(() => loadAssignments());
+
+}
+
+
+// ================= NAVIGATION =================
+
+function submitted(id) {
+    window.location.href = `/assignments/submitted/${id}/`;
+}
+
+function notSubmitted(id) {
+    window.location.href = `/assignments/not-submitted/${id}/`;
+}
+
+
+// ================= SUBMIT FILE =================
+
+function submitAssignment(id) {
+
+    let input = document.createElement("input");
+    input.type = "file";
+
+    input.onchange = function () {
+
+        let file = input.files[0];
+        let form = new FormData();
+        form.append("file", file);
+
+        const token = localStorage.getItem("access");
+
+        fetch(`/assignments/api/submit/${id}/`, {
+            method: "POST",
+            body: form,
+            headers: {
+                ...(token ? { "Authorization": "Bearer " + token } : {})
+            }
+        })
+        .then(r => r.json())
+        .then(() => {
+            alert("Assignment submitted");
+            loadAssignments();
+        });
+
+    };
+
+    input.click();
+}
+
+
+// ================= INIT =================
+
+loadUser().then(loadAssignments);
 
 </script>
 

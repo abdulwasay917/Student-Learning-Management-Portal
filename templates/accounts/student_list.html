@@ -137,26 +137,39 @@ tr:hover{
 
 <script>
 
-fetch("/accounts/api/students/")
-.then(response => response.json())
+function authFetch(url, options = {}) {
+
+    const token = localStorage.getItem("access");
+
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+    });
+}
+
+// ================= LOAD STUDENTS =================
+
+authFetch("/accounts/api/students/")
+.then(res => res.json())
 .then(data => {
 
-    const students = data.students;
+    const students = data.students || [];
     const isSuperuser = data.is_superuser;
 
-    if(isSuperuser){
+    if (isSuperuser) {
         document.getElementById("action-header").style.display = "";
     }
 
     let rows = "";
 
-    if(students.length === 0){
-
+    if (students.length === 0) {
         rows = `
             <tr>
-                <td colspan="${isSuperuser ? 7 : 6}" class="empty">
-                    No students found
-                </td>
+                <td colspan="7" class="empty">No students found</td>
             </tr>
         `;
     }
@@ -173,12 +186,10 @@ fetch("/accounts/api/students/")
                 <td>${student.roll_number || "N/A"}</td>
         `;
 
-        if(isSuperuser){
-
+        if (isSuperuser) {
             rows += `
                 <td>
-                    <button
-                        class="delete-btn"
+                    <button class="delete-btn"
                         onclick="deleteUser(${student.user_id})">
                         Delete
                     </button>
@@ -192,9 +203,7 @@ fetch("/accounts/api/students/")
     document.getElementById("students-table").innerHTML = rows;
 
 })
-.catch(error => {
-
-    console.log(error);
+.catch(() => {
 
     document.getElementById("students-table").innerHTML = `
         <tr>
@@ -203,49 +212,32 @@ fetch("/accounts/api/students/")
             </td>
         </tr>
     `;
-
 });
 
-function deleteUser(userId){
 
-    if(!confirm("Are you sure you want to delete this student?")){
-        return;
-    }
+// ================= DELETE USER =================
+
+function deleteUser(userId) {
+
+    if (!confirm("Are you sure?")) return;
+
+    const token = localStorage.getItem("access");
 
     fetch(`/accounts/api/delete-user/${userId}/`, {
         method: "DELETE",
-        credentials: "include",
         headers: {
-            "X-CSRFToken": getCookie("csrftoken")
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": "Bearer " + token } : {})
         }
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
         alert(data.message || data.error);
         location.reload();
     })
-    .catch(error => {
-        console.log(error);
+    .catch(() => {
         alert("Request failed");
     });
-}
-function getCookie(name) {
-    let cookieValue = null;
-
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-
-    return cookieValue;
 }
 
 </script>

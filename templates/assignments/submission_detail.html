@@ -101,41 +101,78 @@ h1{
 
 <script>
 
-const submissionId =
-window.location.pathname.split("/")[3];
+function authFetch(url, options = {}) {
+    const token = localStorage.getItem("access");
 
-fetch(
-    `/assignments/api/submission/${submissionId}/`
-)
-.then(r=>r.json())
-.then(data=>{
+    return fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            ...(token ? { "Authorization": "Bearer " + token } : {})
+        }
+    });
+}
 
-    document.getElementById(
-        "student_name"
-    ).innerText =
-        data.student_name;
+// ================= GET ID =================
 
-    document.getElementById(
-        "roll_number"
-    ).innerText =
-        data.roll_number;
+const submissionId = window.location.pathname.split("/")[3];
 
-    document.getElementById(
-        "assignment_title"
-    ).innerText =
-        data.assignment_title;
+// ================= ELEMENTS =================
 
-    document.getElementById(
-        "submitted_at"
-    ).innerText =
-        new Date(
-            data.submitted_at
-        ).toLocaleString();
+const setText = (id, value) => {
+    document.getElementById(id).innerText = value || "N/A";
+};
 
-    document.getElementById(
-        "file_link"
-    ).href =
-        data.file;
+// ================= LOAD DATA =================
+
+authFetch(`/assignments/api/submission/${submissionId}/`)
+.then(async res => {
+
+    if (res.status === 401) {
+        alert("Session expired. Please login again.");
+        window.location.href = "/accounts/login/";
+        return;
+    }
+
+    if (!res.ok) {
+        throw new Error("Failed to load submission");
+    }
+
+    return res.json();
+})
+.then(data => {
+
+    if (!data) return;
+
+    setText("student_name", data.student_name);
+    setText("roll_number", data.roll_number);
+    setText("assignment_title", data.assignment_title);
+
+    if (data.submitted_at) {
+        setText(
+            "submitted_at",
+            new Date(data.submitted_at).toLocaleString()
+        );
+    } else {
+        setText("submitted_at", "Not available");
+    }
+
+    const fileLink = document.getElementById("file_link");
+
+    if (data.file) {
+        fileLink.href = data.file;
+        fileLink.style.display = "inline-block";
+    } else {
+        fileLink.style.display = "none";
+    }
+
+})
+.catch(err => {
+
+    console.log(err);
+
+    setText("student_name", "Error loading data");
 
 });
 

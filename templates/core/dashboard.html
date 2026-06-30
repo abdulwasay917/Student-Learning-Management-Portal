@@ -1,320 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LMS Dashboard</title>
-
-    <style>
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Segoe UI", sans-serif;
-        }
-
-        body {
-            background: #f8fafc;
-        }
-
-        /* TOP NAVBAR */
-        .navbar {
-            background: #0f172a;
-            color: white;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-left {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logout-btn {
-            background: #dc2626;
-            border: none;
-            padding: 8px 14px;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        /* LAYOUT */
-        .container {
-            display: flex;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 240px;
-            background: #111827;
-            height: 100vh;
-            padding: 20px;
-            color: white;
-        }
-
-        .sidebar a {
-            display: block;
-            padding: 12px;
-            margin-bottom: 8px;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-
-        .sidebar a:hover {
-            background: #1f2937;
-        }
-
-        /* MAIN */
-        .main {
-            flex: 1;
-            padding: 30px;
-        }
-
-        /* PROFILE CARD */
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
-            margin-bottom: 20px;
-        }
-
-        .title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 10px;
-        }
-
-        .info {
-            margin-top: 8px;
-            color: #334155;
-        }
-
-        /* ROLE BADGE */
-        .badge {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            background: #2563eb;
-            color: white;
-            font-size: 12px;
-        }
-
-        .section-title {
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #2563eb;
-        }
-
-    </style>
-
+<meta charset="UTF-8">
+<title>LMS Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Segoe UI,sans-serif}
+body{background:#f8fafc}
+.navbar{background:#0f172a;color:#fff;padding:15px 25px;display:flex;justify-content:space-between}
+.nav-right{display:flex;gap:15px;align-items:center}
+.logout-btn{background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;cursor:pointer}
+.container{display:flex}
+.sidebar{width:240px;background:#111827;color:#fff;height:100vh;padding:20px}
+.sidebar a{display:block;color:#fff;text-decoration:none;padding:12px;border-radius:8px;margin-bottom:8px}
+.sidebar a:hover{background:#1f2937}
+.main{flex:1;padding:30px}
+.card{background:#fff;padding:25px;border-radius:16px;box-shadow:0 4px 15px rgba(0,0,0,.08)}
+.info{margin-top:8px}
+.badge{display:inline-block;margin-top:10px;padding:6px 12px;background:#2563eb;color:#fff;border-radius:20px}
+.section-title{margin-top:20px;color:#2563eb}
+</style>
 </head>
 <body>
-
-<!-- NAVBAR -->
 <div class="navbar">
-
-    <div class="nav-left">
-        LMS Portal
-    </div>
-
-    <div class="nav-right">
-
-        <span id="navName"></span>
-
-        <button class="logout-btn" onclick="logoutUser()">
-            Logout
-        </button>
-
-    </div>
-
+<div><b>LMS Portal</b></div>
+<div class="nav-right"><span id="navName"></span><button class="logout-btn" onclick="logoutUser()">Logout</button></div>
 </div>
-
-<!-- LAYOUT -->
 <div class="container">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-
-        <a href="/core/dashboard/">Dashboard</a>
-
-        <a href="/meetings/">Meetings</a>
-
-        <a href="/assignments/">Assignments</a>
-
-        <div id="admin-links"></div>
-
-    </div>
-
-    <!-- MAIN -->
-    <div class="main">
-
-        <div class="card">
-
-            <div class="title" id="welcome">
-                Loading...
-            </div>
-
-            <div class="info">
-                <b>Name:</b> <span id="name"></span>
-            </div>
-
-            <div class="info">
-                <b>Username:</b> <span id="username"></span>
-            </div>
-
-            <div class="info">
-                <b>Email:</b> <span id="email"></span>
-            </div>
-
-            <div class="info">
-                <b>Phone:</b> <span id="phone"></span>
-            </div>
-
-            <div class="badge" id="role"></div>
-
-            <div id="extra-info"></div>
-
-        </div>
-
-    </div>
-
+<div class="sidebar">
+<a href="/core/dashboard/">Dashboard</a>
+<a href="/meetings/">Meetings</a>
+<a href="/assignments/">Assignments</a>
+<div id="admin-links"></div>
 </div>
-
+<div class="main">
+<div class="card">
+<h2 id="welcome">Loading...</h2>
+<div class="info"><b>Name:</b> <span id="name"></span></div>
+<div class="info"><b>Username:</b> <span id="username"></span></div>
+<div class="info"><b>Email:</b> <span id="email"></span></div>
+<div class="info"><b>Phone:</b> <span id="phone"></span></div>
+<div class="badge" id="role"></div>
+<div id="extra-info"></div>
+</div>
+</div>
+</div>
 <script>
-
-    fetch("/core/api/dashboard/", {
-    credentials: "include",
-    headers: {
-        "Accept": "application/json"
-    }
+function authFetch(url, options={}){
+ const token=localStorage.getItem("access");
+ return fetch(url,{
+   ...options,
+   headers:{
+     ...(options.headers||{}),
+     "Accept":"application/json",
+     ...(token?{"Authorization":"Bearer "+token}:{})
+   }
+ });
+}
+authFetch("/core/api/dashboard/")
+.then(async res=>{
+ if(res.status===401){location.href="/accounts/login/";return null;}
+ return await res.json();
 })
-        .then(res => res.json())
-        .then(data => {
-
-            document.getElementById("welcome").innerText =
-                "Welcome " + data.name;
-
-            document.getElementById("navName").innerText =
-                data.name;
-
-            document.getElementById("name").innerText =
-                data.name;
-
-            document.getElementById("username").innerText =
-                data.username;
-
-            document.getElementById("email").innerText =
-                data.email;
-
-            document.getElementById("phone").innerText =
-                data.phone || "Not Provided";
-
-            document.getElementById("role").innerText =
-                data.role.toUpperCase();
-
-            let links = "";
-
-            if (data.is_superuser) {
-
-                links += `
-                    <a href="/accounts/create-user/">
-                        Create User
-                    </a>
-
-                    <a href="/accounts/teachers/">
-                        Teachers
-                    </a>
-
-                    <a href="/accounts/students/">
-                        Students
-                    </a>
-                `;
-            }
-
-            else if (data.role === "teacher") {
-
-                links += `
-                    <a href="/accounts/students/">
-                        Students
-                    </a>
-                `;
-            }
-
-            document.getElementById("admin-links").innerHTML = links;
-
-            let extra = document.getElementById("extra-info");
-
-            if (data.role === "teacher") {
-
-                extra.innerHTML = `
-                    <h3 class="section-title">Teacher Info</h3>
-                    <p><b>Expertise:</b> ${data.teacher?.expertise || "Not Added"}</p>
-                    <p><b>Bio:</b> ${data.teacher?.bio || "Not Added"}</p>
-                `;
-            }
-
-            if (data.role === "student") {
-
-                extra.innerHTML = `
-                    <h3 class="section-title">Student Info</h3>
-                    <p><b>Roll No:</b> ${data.student?.roll_number || "Not Assigned"}</p>
-                `;
-            }
-
-        })
-
-        .catch(error => {
-
-            console.log(error);
-
-            document.getElementById("welcome").innerText =
-                "Unable to load dashboard";
-
-        });
-
-    function logoutUser() {
-
-    fetch("/accounts/api/logout/", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken")
-        }
-    })
-    .then(() => {
-        window.location.href = "/accounts/login/";
-    });
-
+.then(data=>{
+ if(!data)return;
+ welcome.innerText="Welcome "+data.name;
+ navName.innerText=data.name;
+ name.innerText=data.name;
+ username.innerText=data.username;
+ email.innerText=data.email;
+ phone.innerText=data.phone||"Not Provided";
+ role.innerText=(data.role||"").toUpperCase();
+ let links="";
+ if(data.is_superuser){
+   links+=`<a href="/accounts/create-user/">Create User</a>
+   <a href="/accounts/teachers/">Teachers</a>
+   <a href="/accounts/students/">Students</a>`;
+ }else if(data.role==="teacher"){
+   links+=`<a href="/accounts/students/">Students</a>`;
+ }
+ document.getElementById("admin-links").innerHTML=links;
+ const extra=document.getElementById("extra-info");
+ if(data.role==="teacher"){
+   extra.innerHTML=`<h3 class="section-title">Teacher Info</h3>
+   <p><b>Expertise:</b> ${data.teacher?.expertise||"Not Added"}</p>
+   <p><b>Bio:</b> ${data.teacher?.bio||"Not Added"}</p>`;
+ }else if(data.role==="student"){
+   extra.innerHTML=`<h3 class="section-title">Student Info</h3>
+   <p><b>Roll No:</b> ${data.student?.roll_number||"Not Assigned"}</p>`;
+ }
+})
+.catch(console.error);
+function logoutUser(){
+ localStorage.removeItem("access");
+ localStorage.removeItem("refresh");
+ location.href="/accounts/login/";
 }
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 </script>
-
 </body>
 </html>
