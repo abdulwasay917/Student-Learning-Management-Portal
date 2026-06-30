@@ -226,18 +226,17 @@ async function loginUser() {
     try {
 
         const res = await fetch("/accounts/api/login/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        });
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        username,
+        password
+    })
+});
 
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
 
         if (!res.ok) {
             msg.innerText = data.detail || data.error || "Login failed";
