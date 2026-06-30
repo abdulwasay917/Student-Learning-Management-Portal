@@ -1,148 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Meetings</title>
+    <meta charset="UTF-8">
+    <title>Meetings</title>
 
-<style>
+    <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:"Segoe UI",sans-serif;
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", sans-serif;
+        }
 
-body{
-    background:#f4f6f9;
-    padding:30px;
-}
+        body {
+            background: #f4f6f9;
+            padding: 30px;
+        }
 
-/* Header */
-.header{
-    background:linear-gradient(135deg,#0f172a,#1e293b);
-    color:white;
-    padding:25px;
-    border-radius:18px;
-    margin-bottom:25px;
-}
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+        }
 
-/* Grid */
-.container{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
-    gap:20px;
-}
+        /* Grid */
+        .container {
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
 
-/* Card */
-.card{
-    background:white;
-    padding:22px;
-    border-radius:18px;
-    box-shadow:0 6px 18px rgba(0,0,0,.08);
-    transition:.3s;
-}
+        /* Card */
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 18px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+            transition: .3s;
+        }
 
-.card:hover{
-    transform:translateY(-4px);
-}
+        .card:hover {
+            transform: translateY(-4px);
+        }
 
-/* Title */
-.title{
-    font-size:18px;
-    font-weight:600;
-    color:#0f172a;
-}
+        /* Title */
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+        }
 
-.sub{
-    font-size:13px;
-    color:#64748b;
-    margin-top:4px;
-}
+        .sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
 
-/* Meta info */
-.meta{
-    margin-top:10px;
-    font-size:13px;
-    color:#475569;
-}
+        /* Meta info */
+        .meta {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #475569;
+        }
 
-/* Join button */
-.join-btn{
-    display:inline-block;
-    margin-top:15px;
-    padding:12px 18px;
-    background:#16a34a;
-    color:white;
-    border-radius:10px;
-    text-decoration:none;
-    font-weight:600;
-    font-size:14px;
-}
+        /* Join button */
+        .join-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 18px;
+            background: #16a34a;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
 
-.join-btn:hover{
-    background:#15803d;
-}
+        .join-btn:hover {
+            background: #15803d;
+        }
 
-/* Create Button */
-.create-btn{
-    position:fixed;
-    bottom:25px;
-    right:25px;
-    background:#2563eb;
-    color:white;
-    padding:16px 22px;
-    border-radius:50px;
-    text-decoration:none;
-    font-weight:600;
-    display:none;
-    box-shadow:0 10px 25px rgba(0,0,0,.2);
-}
+        .back-btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+        }
 
-/* Top row */
-.top{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:10px;
-}
+        .back-btn:hover {
+            background: #1d4ed8;
+        }
 
-/* Actions */
-.actions{
-    display:flex;
-    gap:8px;
-}
+        /* Create Button */
+        .create-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #2563eb;
+            color: white;
+            padding: 16px 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .2);
+        }
 
-.actions button{
-    padding:10px 14px;
-    border:none;
-    border-radius:8px;
-    font-size:13px;
-    font-weight:600;
-    cursor:pointer;
-}
+        /* Top row */
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
 
-/* Bigger buttons */
-.edit{
-    background:#f59e0b;
-    color:white;
-}
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
 
-.del{
-    background:#dc2626;
-    color:white;
-}
+        .actions button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-.edit:hover{background:#d97706;}
-.del:hover{background:#b91c1c;}
+        /* Bigger buttons */
+        .edit {
+            background: #f59e0b;
+            color: white;
+        }
 
-</style>
+        .del {
+            background: #dc2626;
+            color: white;
+        }
+
+        .edit:hover {
+            background: #d97706;
+        }
+
+        .del:hover {
+            background: #b91c1c;
+        }
+
+    </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>Live Meetings</h1>
-    <p>Join your active classes before they expire</p>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;">
+
+        <div>
+            <h1>Live Meetings</h1>
+            <p>Join your active classes before they expire</p>
+        </div>
+
+        <a href="/core/dashboard/" class="back-btn">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
 </div>
 
 <div class="container" id="meetings"></div>
@@ -153,114 +184,114 @@ body{
 
 <script>
 
-async function refreshAccessToken() {
+    async function refreshAccessToken() {
 
-    const refresh = localStorage.getItem("refresh");
-    if (!refresh) return false;
+        const refresh = localStorage.getItem("refresh");
+        if (!refresh) return false;
 
-    try {
-        const response = await fetch("/token/refresh/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh })
-        });
+        try {
+            const response = await fetch("/token/refresh/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({refresh})
+            });
 
-        if (!response.ok) return false;
+            if (!response.ok) return false;
 
-        const data = await response.json();
+            const data = await response.json();
 
-        localStorage.setItem("access", data.access);
+            localStorage.setItem("access", data.access);
 
-        if (data.refresh) {
-            localStorage.setItem("refresh", data.refresh);
+            if (data.refresh) {
+                localStorage.setItem("refresh", data.refresh);
+            }
+
+            return true;
+
+        } catch (err) {
+            console.error(err);
+            return false;
         }
-
-        return true;
-
-    } catch (err) {
-        console.error(err);
-        return false;
     }
-}
 
 
-/* MAIN AUTH FETCH (WITH AUTO REFRESH) */
-async function authFetch(url, options = {}) {
+    /* MAIN AUTH FETCH (WITH AUTO REFRESH) */
+    async function authFetch(url, options = {}) {
 
-    let access = localStorage.getItem("access");
+        let access = localStorage.getItem("access");
 
-    let response = await fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(access ? { "Authorization": "Bearer " + access } : {})
-        }
-    });
-
-    // token expired → try refresh
-    if (response.status === 401) {
-
-        const refreshed = await refreshAccessToken();
-
-        if (!refreshed) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-            window.location.href = "/accounts/login/";
-            return response;
-        }
-
-        access = localStorage.getItem("access");
-
-        response = await fetch(url, {
+        let response = await fetch(url, {
             ...options,
             headers: {
                 "Content-Type": "application/json",
                 ...(options.headers || {}),
-                ...(access ? { "Authorization": "Bearer " + access } : {})
+                ...(access ? {"Authorization": "Bearer " + access} : {})
             }
         });
+
+        // token expired → try refresh
+        if (response.status === 401) {
+
+            const refreshed = await refreshAccessToken();
+
+            if (!refreshed) {
+                localStorage.removeItem("access");
+                localStorage.removeItem("refresh");
+                window.location.href = "/accounts/login/";
+                return response;
+            }
+
+            access = localStorage.getItem("access");
+
+            response = await fetch(url, {
+                ...options,
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(options.headers || {}),
+                    ...(access ? {"Authorization": "Bearer " + access} : {})
+                }
+            });
+        }
+
+        return response;
     }
 
-    return response;
-}
+
+    let user = {};
+
+    /* USER */
+    function loadUser() {
+        return authFetch("/core/api/dashboard/")
+            .then(async (res) => {
+
+                const data = await res.json().catch(() => ({}));
+                user = data;
+
+                if (user.role === "teacher" || user.is_superuser) {
+                    document.getElementById("createBtn").style.display = "block";
+                }
+            });
+    }
 
 
-let user = {};
+    /* MEETINGS */
+    function loadMeetings() {
 
-/* USER */
-function loadUser() {
-    return authFetch("/core/api/dashboard/")
-    .then(async (res) => {
+        authFetch("/meetings/api/")
+            .then(async (res) => {
 
-        const data = await res.json().catch(() => ({}));
-        user = data;
+                const data = await res.json().catch(() => []);
 
-        if (user.role === "teacher" || user.is_superuser) {
-            document.getElementById("createBtn").style.display = "block";
-        }
-    });
-}
+                let box = document.getElementById("meetings");
+                box.innerHTML = "";
 
+                data.forEach(m => {
 
-/* MEETINGS */
-function loadMeetings() {
+                    let canEdit =
+                        user.is_superuser ||
+                        m.teacher_name === user.name;
 
-    authFetch("/meetings/api/")
-    .then(async (res) => {
-
-        const data = await res.json().catch(() => []);
-
-        let box = document.getElementById("meetings");
-        box.innerHTML = "";
-
-        data.forEach(m => {
-
-            let canEdit =
-                user.is_superuser ||
-                m.teacher_name === user.name;
-
-            box.innerHTML += `
+                    box.innerHTML += `
             <div class="card">
 
                 <div class="top">
@@ -294,57 +325,57 @@ function loadMeetings() {
                 </a>
 
             </div>`;
-        });
+                });
 
-    })
-    .catch(err => console.error(err));
-}
-
-
-/* EXPIRY CHECK */
-function check(exp){
-    if(new Date() > new Date(exp)){
-        alert("This meeting has expired!");
-        return false;
+            })
+            .catch(err => console.error(err));
     }
-    return true;
-}
 
 
-/* DELETE */
-function del(id){
-
-    authFetch(`/meetings/api/delete/${id}/`, {
-        method: "DELETE",
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken")
+    /* EXPIRY CHECK */
+    function check(exp) {
+        if (new Date() > new Date(exp)) {
+            alert("This meeting has expired!");
+            return false;
         }
-    })
-    .then(() => loadMeetings())
-    .catch(err => console.error(err));
-}
+        return true;
+    }
 
 
-/* EDIT */
-function edit(id){
-    window.location.href = `/meetings/edit/${id}/`;
-}
+    /* DELETE */
+    function del(id) {
+
+        authFetch(`/meetings/api/delete/${id}/`, {
+            method: "DELETE",
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken")
+            }
+        })
+            .then(() => loadMeetings())
+            .catch(err => console.error(err));
+    }
 
 
-/* CSRF */
-function getCookie(name){
-    let v = null;
-    document.cookie.split(';').forEach(c=>{
-        if(c.trim().startsWith(name + '=')){
-            v = decodeURIComponent(c.trim().split('=')[1]);
-        }
-    });
-    return v;
-}
+    /* EDIT */
+    function edit(id) {
+        window.location.href = `/meetings/edit/${id}/`;
+    }
 
 
-/* INIT */
-loadUser().then(loadMeetings);
+    /* CSRF */
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(';').forEach(c => {
+            if (c.trim().startsWith(name + '=')) {
+                v = decodeURIComponent(c.trim().split('=')[1]);
+            }
+        });
+        return v;
+    }
+
+
+    /* INIT */
+    loadUser().then(loadMeetings);
 
 </script>
 
