@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 
 from accounts.models import TeacherProfile, StudentProfile
+import re
 
 User = get_user_model()
 
@@ -39,6 +40,20 @@ class CreateUserAPI(APIView):
 
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
+        if len(password) < 8:
+            return Response({"error": "Password must be at least 8 characters"}, status=400)
+
+        if not re.search(r'[A-Z]', password):
+            return Response({"error": "At least 1 uppercase letter required"}, status=400)
+
+        if not re.search(r'[a-z]', password):
+            return Response({"error": "At least 1 lowercase letter required"}, status=400)
+
+        if not re.search(r'\d', password):
+            return Response({"error": "At least 1 number required"}, status=400)
+
+        if not re.search(r'[@$!%*?&]', password):
+            return Response({"error": "At least 1 special character required"}, status=400)
 
         user = User.objects.create_user(
             username=username,
@@ -160,6 +175,21 @@ class ResetPasswordAPI(APIView):
 
     def post(self, request, uidb64, token):
         password = request.data.get("password")
+
+        if len(password) < 8:
+            return Response({"error": "Password must be at least 8 characters"}, status=400)
+
+        if not re.search(r'[A-Z]', password):
+            return Response({"error": "At least 1 uppercase letter required"}, status=400)
+
+        if not re.search(r'[a-z]', password):
+            return Response({"error": "At least 1 lowercase letter required"}, status=400)
+
+        if not re.search(r'\d', password):
+            return Response({"error": "At least 1 number required"}, status=400)
+
+        if not re.search(r'[@$!%*?&]', password):
+            return Response({"error": "At least 1 special character required"}, status=400)
 
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
