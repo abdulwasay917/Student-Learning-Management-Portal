@@ -196,73 +196,128 @@
 </div>
 
 <script>
+
 function getCookie(name) {
     let cookieValue = null;
+
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
+
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+
             if (cookie.startsWith(name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
+
     return cookieValue;
 }
 
+
+/* TOGGLE FIELDS */
 function toggleFields() {
+
     const role = document.getElementById("role").value;
+
     document.getElementById("teacher-fields").style.display = "none";
     document.getElementById("student-fields").style.display = "none";
 
     if (role === "teacher") {
         document.getElementById("teacher-fields").style.display = "block";
     }
+
     if (role === "student") {
         document.getElementById("student-fields").style.display = "block";
     }
 }
 
-function createUser() {
+
+/* CREATE USER */
+async function createUser() {
+
+    const btn = document.querySelector(".submit-btn");
+    const msg = document.getElementById("msg");
+
     const token = localStorage.getItem("access");
 
-    fetch("/accounts/api/create-user/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-            "Authorization": token ? ("Bearer " + token) : ""
-        },
-        body: JSON.stringify({
-            role: document.getElementById("role").value,
-            name: document.getElementById("name").value,
-            username: document.getElementById("username").value,
-            email: document.getElementById("email").value,
-            password: document.getElementById("password").value,
-            phone: document.getElementById("phone").value,
-            bio: document.getElementById("bio")?.value || "",
-            expertise: document.getElementById("expertise")?.value || "",
-            roll_number: document.getElementById("roll_number")?.value || ""
-        })
-    })
-    .then(async res => {
-        const data = await res.json();
-        const msg = document.getElementById("msg");
-        msg.className = res.ok ? "success" : "error";
-        msg.innerText = data.message || data.error || data.detail || "Something went wrong";
+    const role = document.getElementById("role").value;
+    const name = document.getElementById("name").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    const bio = document.getElementById("bio")?.value.trim() || "";
+    const expertise = document.getElementById("expertise")?.value.trim() || "";
+    const roll_number = document.getElementById("roll_number")?.value.trim() || "";
+
+    msg.innerText = "";
+    msg.className = "";
+
+    /* VALIDATION */
+    if (!role || !name || !username || !email || !password) {
+        msg.className = "error";
+        msg.innerText = "Please fill all required fields";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Creating...";
+
+    try {
+
+        const res = await fetch("/accounts/api/create-user/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { "Authorization": "Bearer " + token } : {})
+            },
+            body: JSON.stringify({
+                role,
+                name,
+                username,
+                email,
+                password,
+                phone,
+                bio,
+                expertise,
+                roll_number
+            })
+        });
+
+        const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
+
+            msg.className = "success";
+            msg.innerText = data.message || "User created successfully";
+
             setTimeout(() => {
                 window.location.href = "/core/dashboard/";
-            }, 1000);
+            }, 900);
+
+        } else {
+
+            msg.className = "error";
+            msg.innerText = data.error || data.detail || "Creation failed";
         }
-    })
-    .catch(() => {
-        document.getElementById("msg").className = "error";
-        document.getElementById("msg").innerText = "Request failed";
-    });
+
+    } catch (err) {
+
+        console.error(err);
+        msg.className = "error";
+        msg.innerText = "Network error";
+
+    } finally {
+
+        btn.disabled = false;
+        btn.innerText = "Create User";
+    }
 }
+
 </script>
 </body>
 </html>

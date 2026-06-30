@@ -73,29 +73,92 @@ body{
 
 <script>
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-    return fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const res = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
         }
-    });
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
-// ================= GET ASSIGNMENT ID =================
 
-const assignmentId = window.location.pathname.split("/")[3];
+/* UNIFIED AUTH FETCH */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.body ? {} : {}), // GET safe
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
+}
+
+
+/* SAFE ID EXTRACTION */
+function getAssignmentId() {
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1];
+}
+
+const assignmentId = getAssignmentId();
 
 const rows = document.getElementById("rows");
 
-// ================= LOAD DATA =================
 
-authFetch(`/assignments/api/not-submitted/${assignmentId}/`)
-.then(async res => {
+/* LOAD DATA */
+async function loadNotSubmitted() {
+
+    const res = await authFetch(`/assignments/api/not-submitted/${assignmentId}/`);
 
     if (res.status === 401) {
         alert("Session expired. Please login again.");
@@ -103,20 +166,16 @@ authFetch(`/assignments/api/not-submitted/${assignmentId}/`)
         return;
     }
 
-    return res.json();
-})
-.then(data => {
+    const data = await res.json().catch(() => []);
 
     rows.innerHTML = "";
 
     if (!data || data.length === 0) {
-
         rows.innerHTML = `
             <div class="empty">
                 All students have submitted this assignment.
             </div>
         `;
-
         return;
     }
 
@@ -124,27 +183,16 @@ authFetch(`/assignments/api/not-submitted/${assignmentId}/`)
 
         rows.innerHTML += `
             <div class="row">
-
                 <div>${student.student_name}</div>
-
                 <div>${student.roll_number}</div>
-
             </div>
         `;
     });
+}
 
-})
-.catch(err => {
 
-    console.log(err);
-
-    rows.innerHTML = `
-        <div class="empty">
-            Failed to load data
-        </div>
-    `;
-
-});
+/* INIT */
+loadNotSubmitted();
 
 </script>
 

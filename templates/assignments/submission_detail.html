@@ -101,33 +101,96 @@ h1{
 
 <script>
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-    return fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const res = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
         }
-    });
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
-// ================= GET ID =================
 
-const submissionId = window.location.pathname.split("/")[3];
+/* UNIFIED AUTH FETCH */
+async function authFetch(url, options = {}) {
 
-// ================= ELEMENTS =================
+    let access = localStorage.getItem("access");
 
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
+}
+
+
+/* SAFE ID EXTRACTION */
+function getSubmissionId() {
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    return parts[parts.length - 1];
+}
+
+const submissionId = getSubmissionId();
+
+
+/* SAFE TEXT SETTER */
 const setText = (id, value) => {
-    document.getElementById(id).innerText = value || "N/A";
+    const el = document.getElementById(id);
+    if (el) el.innerText = value || "N/A";
 };
 
-// ================= LOAD DATA =================
 
-authFetch(`/assignments/api/submission/${submissionId}/`)
-.then(async res => {
+/* LOAD SUBMISSION */
+async function loadSubmission() {
+
+    const res = await authFetch(`/assignments/api/submission/${submissionId}/`);
 
     if (res.status === 401) {
         alert("Session expired. Please login again.");
@@ -135,25 +198,19 @@ authFetch(`/assignments/api/submission/${submissionId}/`)
         return;
     }
 
-    if (!res.ok) {
-        throw new Error("Failed to load submission");
+    const data = await res.json().catch(() => null);
+
+    if (!data) {
+        setText("student_name", "Error loading data");
+        return;
     }
-
-    return res.json();
-})
-.then(data => {
-
-    if (!data) return;
 
     setText("student_name", data.student_name);
     setText("roll_number", data.roll_number);
     setText("assignment_title", data.assignment_title);
 
     if (data.submitted_at) {
-        setText(
-            "submitted_at",
-            new Date(data.submitted_at).toLocaleString()
-        );
+        setText("submitted_at", new Date(data.submitted_at).toLocaleString());
     } else {
         setText("submitted_at", "Not available");
     }
@@ -166,15 +223,11 @@ authFetch(`/assignments/api/submission/${submissionId}/`)
     } else {
         fileLink.style.display = "none";
     }
+}
 
-})
-.catch(err => {
 
-    console.log(err);
-
-    setText("student_name", "Error loading data");
-
-});
+/* INIT */
+loadSubmission();
 
 </script>
 

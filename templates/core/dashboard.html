@@ -45,16 +45,87 @@ body{background:#f8fafc}
 </div>
 </div>
 <script>
-function authFetch(url, options={}){
- const token=localStorage.getItem("access");
- return fetch(url,{
-   ...options,
-   headers:{
-     ...(options.headers||{}),
-     "Accept":"application/json",
-     ...(token?{"Authorization":"Bearer "+token}:{})
-   }
- });
+async function refreshAccessToken() {
+
+    const refresh = localStorage.getItem("refresh");
+
+    if (!refresh) {
+        return false;
+    }
+
+    try {
+        const response = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                refresh: refresh
+            })
+        });
+
+        if (!response.ok) {
+            return false;
+        }
+
+        const data = await response.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
+        }
+
+        return true;
+
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
+
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            "Accept": "application/json",
+            ...(access ? {
+                "Authorization": "Bearer " + access
+            } : {})
+        }
+    });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                "Accept": "application/json",
+                ...(access ? {
+                    "Authorization": "Bearer " + access
+                } : {})
+            }
+        });
+    }
+
+    return response;
 }
 authFetch("/core/api/dashboard/")
 .then(async res=>{
@@ -90,10 +161,27 @@ authFetch("/core/api/dashboard/")
  }
 })
 .catch(console.error);
-function logoutUser(){
- localStorage.removeItem("access");
- localStorage.removeItem("refresh");
- location.href="/accounts/login/";
+async function logoutUser(){
+    try{
+        const refresh = localStorage.getItem("refresh");
+
+        await fetch("/accounts/logout/",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "Authorization":"Bearer "+localStorage.getItem("access")
+            },
+            body:JSON.stringify({
+                refresh: refresh
+            })
+        });
+    }catch(error){
+        console.error(error);
+    }finally{
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        location.href="/accounts/login/";
+    }
 }
 </script>
 </body>

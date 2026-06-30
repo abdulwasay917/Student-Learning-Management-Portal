@@ -95,22 +95,79 @@ button:hover{
 
 <script>
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-    return fetch(url, {
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const response = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!response.ok) return false;
+
+        const data = await response.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+
+/* GLOBAL AUTH FETCH (UNIFIED SYSTEM) */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+            ...(access ? { "Authorization": "Bearer " + access } : {})
         }
     });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
 }
 
 
-// ================= CREATE ASSIGNMENT =================
-
+/* CREATE ASSIGNMENT */
 function createAssignment() {
 
     const title = document.getElementById("title").value.trim();
@@ -124,13 +181,13 @@ function createAssignment() {
     authFetch("/assignments/api/create/", {
         method: "POST",
         body: JSON.stringify({
-            title: title,
-            statement: statement
+            title,
+            statement
         })
     })
-    .then(async res => {
+    .then(async (res) => {
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (res.status === 401) {
             alert("Session expired. Please login again.");
@@ -148,7 +205,7 @@ function createAssignment() {
 
     })
     .catch(err => {
-        console.log(err);
+        console.error(err);
         alert("Server error");
     });
 }

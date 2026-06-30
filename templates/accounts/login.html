@@ -183,42 +183,61 @@ body{
 </div>
 
 <script>
+
 function getCookie(name) {
     let cookieValue = null;
+
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
+
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+
             if (cookie.startsWith(name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
+
     return cookieValue;
 }
 
-function loginUser() {
+
+/* LOGIN */
+async function loginUser() {
+
     const username = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value.trim();
     const msg = document.getElementById("msg");
+    const btn = document.querySelector(".login-btn");
 
-    msg.style.color = "#dc2626";
     msg.innerText = "";
+    msg.style.color = "#dc2626";
 
-    fetch("/accounts/api/login/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken")
-        },
-        body: JSON.stringify({
-            username: username,
-            password: password
-        })
-    })
-    .then(async res => {
-        const data = await res.json();
+    if (!username || !password) {
+        msg.innerText = "Please fill all fields";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Logging in...";
+
+    try {
+
+        const res = await fetch("/accounts/api/login/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        });
+
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
             msg.innerText = data.detail || data.error || "Login failed";
@@ -233,18 +252,23 @@ function loginUser() {
             localStorage.setItem("refresh", data.refresh);
         }
 
-        msg.style.color = "green";
+        msg.style.color = "#16a34a";
         msg.innerText = data.message || "Login successful";
 
         setTimeout(() => {
             window.location.href = "/core/dashboard/";
-        }, 500);
-    })
-    .catch(() => {
-        msg.style.color = "#dc2626";
+        }, 700);
+
+    } catch (err) {
+        console.error(err);
         msg.innerText = "Network error";
-    });
+
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Login";
+    }
 }
+
 </script>
 
 </body>

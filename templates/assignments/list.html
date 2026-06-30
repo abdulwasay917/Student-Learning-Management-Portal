@@ -134,150 +134,192 @@
 
 <script>
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-    return fetch(url, {
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const res = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+
+/* UNIFIED AUTH FETCH */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
         ...options,
         headers: {
-            "Content-Type": "application/json",
+            ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
             ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+            ...(access ? { "Authorization": "Bearer " + access } : {})
         }
     });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
 }
+
 
 let user = {};
 
-// ================= GET USER =================
 
-function loadUser() {
-    return authFetch("/core/api/dashboard/")
-        .then(async res => {
+/* USER */
+async function loadUser() {
 
-            if (res.status === 401) {
-                window.location.href = "/accounts/login/";
-                return;
-            }
+    const res = await authFetch("/core/api/dashboard/");
 
-            return res.json();
-        })
-        .then(data => {
+    if (res.status === 401) {
+        window.location.href = "/accounts/login/";
+        return;
+    }
 
-            user = data;
+    user = await res.json().catch(() => ({}));
 
-            if (!user) return;
-
-            if (user.role === "teacher" || user.is_superuser) {
-                document.getElementById("createBtn").style.display = "block";
-            }
-
-        });
+    if (user.role === "teacher" || user.is_superuser) {
+        document.getElementById("createBtn").style.display = "block";
+    }
 }
 
 
-// ================= LOAD ASSIGNMENTS =================
+/* ASSIGNMENTS */
+async function loadAssignments() {
 
-function loadAssignments() {
+    const res = await authFetch("/assignments/api/");
 
-    authFetch("/assignments/api/")
-        .then(async r => {
+    if (res.status === 401) {
+        alert("Session expired");
+        window.location.href = "/accounts/login/";
+        return;
+    }
 
-            if (r.status === 401) {
-                alert("Session expired");
-                window.location.href = "/accounts/login/";
-                return;
-            }
+    const data = await res.json().catch(() => []);
 
-            return r.json();
-        })
-        .then(data => {
+    let box = document.getElementById("assignments");
+    box.innerHTML = "";
 
-            let box = document.getElementById("assignments");
-            box.innerHTML = "";
+    if (!data || data.length === 0) {
+        box.innerHTML = "<p>No assignments found</p>";
+        return;
+    }
 
-            if (!data || data.length === 0) {
-                box.innerHTML = "<p>No assignments found</p>";
-                return;
-            }
+    data.forEach(a => {
 
-            data.forEach(a => {
+        let buttons = "";
 
-                let buttons = "";
+        if (user.role === "student") {
 
-                if (user.role === "student") {
+            buttons = a.submitted
+                ? `<button class="submitted" onclick="submitAssignment(${a.id})">Edit Submission</button>`
+                : `<button class="submit" onclick="submitAssignment(${a.id})">Submit Assignment</button>`;
+        }
+        else {
 
-                    buttons = a.submitted
-                        ? `<button class="submitted" onclick="submitAssignment(${a.id})">Edit Submission</button>`
-                        : `<button class="submit" onclick="submitAssignment(${a.id})">Submit Assignment</button>`;
-                }
-                else {
+            let canManage =
+                user.is_superuser ||
+                user.id === a.creator_id;
 
-                    let canManage =
-                        user.is_superuser ||
-                        user.id === a.creator_id;
+            buttons = `
+                <button class="submitted" onclick="submitted(${a.id})">Submitted</button>
+                <button class="notsubmitted" onclick="notSubmitted(${a.id})">Not Submitted</button>
+                ${canManage ? `<button class="delete" onclick="del(${a.id})">Delete</button>` : ""}
+            `;
+        }
 
-                    buttons = `
-                        <button class="submitted" onclick="submitted(${a.id})">Submitted</button>
-                        <button class="notsubmitted" onclick="notSubmitted(${a.id})">Not Submitted</button>
-                        ${canManage ? `<button class="delete" onclick="del(${a.id})">Delete</button>` : ""}
-                    `;
-                }
+        box.innerHTML += `
+            <div class="card">
 
-                box.innerHTML += `
-                    <div class="card">
+                <div class="title">${a.title}</div>
 
-                        <div class="title">${a.title}</div>
+                <div class="sub">
+                    Teacher: ${a.teacher_name}
+                </div>
 
-                        <div class="sub">
-                            Teacher: ${a.teacher_name}
-                        </div>
+                <div class="statement">
+                    ${a.statement}
+                </div>
 
-                        <div class="statement">
-                            ${a.statement}
-                        </div>
+                <div class="meta">
+                    Created: ${new Date(a.created_at).toLocaleString()}
+                </div>
 
-                        <div class="meta">
-                            Created: ${new Date(a.created_at).toLocaleString()}
-                        </div>
+                <div class="actions">
+                    ${buttons}
+                </div>
 
-                        <div class="actions">
-                            ${buttons}
-                        </div>
-
-                    </div>
-                `;
-            });
-
-        })
-        .catch(err => {
-            console.log(err);
-        });
+            </div>
+        `;
+    });
 }
 
 
-// ================= DELETE =================
-
+/* DELETE */
 function del(id) {
 
     if (!confirm("Delete assignment?")) return;
 
-    const token = localStorage.getItem("access");
-
-    fetch(`/assignments/api/delete/${id}/`, {
-        method: "DELETE",
-        headers: {
-            ...(token ? { "Authorization": "Bearer " + token } : {})
-        }
+    authFetch(`/assignments/api/delete/${id}/`, {
+        method: "DELETE"
     })
-    .then(res => res.json())
-    .then(() => loadAssignments());
+    .then(async res => {
 
+        if (!res.ok) {
+            alert("Delete failed");
+            return;
+        }
+
+        loadAssignments();
+    })
+    .catch(err => console.error(err));
 }
 
 
-// ================= NAVIGATION =================
-
+/* NAVIGATION */
 function submitted(id) {
     window.location.href = `/assignments/submitted/${id}/`;
 }
@@ -287,42 +329,38 @@ function notSubmitted(id) {
 }
 
 
-// ================= SUBMIT FILE =================
-
+/* SUBMIT FILE */
 function submitAssignment(id) {
 
     let input = document.createElement("input");
     input.type = "file";
 
-    input.onchange = function () {
+    input.onchange = async function () {
 
         let file = input.files[0];
+
         let form = new FormData();
         form.append("file", file);
 
-        const token = localStorage.getItem("access");
-
-        fetch(`/assignments/api/submit/${id}/`, {
+        const res = await authFetch(`/assignments/api/submit/${id}/`, {
             method: "POST",
-            body: form,
-            headers: {
-                ...(token ? { "Authorization": "Bearer " + token } : {})
-            }
-        })
-        .then(r => r.json())
-        .then(() => {
-            alert("Assignment submitted");
-            loadAssignments();
+            body: form
         });
 
+        if (!res.ok) {
+            alert("Submission failed");
+            return;
+        }
+
+        alert("Assignment submitted");
+        loadAssignments();
     };
 
     input.click();
 }
 
 
-// ================= INIT =================
-
+/* INIT */
 loadUser().then(loadAssignments);
 
 </script>

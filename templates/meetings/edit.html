@@ -111,28 +111,80 @@ button:hover{
 
 <script>
 
-const access = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-function authFetch(url, options = {}) {
-    return fetch(url, {
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const response = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!response.ok) return false;
+
+        const data = await response.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+
+/* GLOBAL AUTH FETCH (WITH REFRESH SUPPORT) */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...(options.headers || {}),
             ...(access ? { "Authorization": "Bearer " + access } : {})
         }
-    }).then(async res => {
-        const data = await res.json().catch(() => ({}));
+    });
 
-        if (res.status === 401) {
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
             window.location.href = "/accounts/login/";
+            return response;
         }
 
-        return { res, data };
-    });
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
 }
 
+
 let id = window.location.pathname.split("/").filter(Boolean).pop();
+
 
 /* CSRF */
 function getCookie(name){
@@ -145,13 +197,14 @@ function getCookie(name){
     return v;
 }
 
-/* Load existing meeting */
-authFetch("/meetings/api/")
-.then(({data}) => {
 
-    let meeting = data.find(x => x.id == id);
+/* LOAD SINGLE MEETING (OPTIMIZED) */
+async function loadMeeting() {
 
-    if(!meeting){
+    const res = await authFetch(`/meetings/api/${id}/`);
+    const meeting = await res.json().catch(() => null);
+
+    if (!meeting) {
         document.getElementById("loading").innerText = "Meeting not found";
         return;
     }
@@ -160,15 +213,16 @@ authFetch("/meetings/api/")
     document.getElementById("link").value = meeting.link;
 
     document.getElementById("loading").style.display = "none";
-});
+}
 
-/* Update meeting */
-function updateMeeting(){
+
+/* UPDATE MEETING */
+function updateMeeting() {
 
     let title = document.getElementById("title").value;
     let link = document.getElementById("link").value;
 
-    if(!title || !link){
+    if (!title || !link) {
         document.getElementById("msg").style.color = "#dc2626";
         document.getElementById("msg").innerText = "All fields are required";
         return;
@@ -179,14 +233,13 @@ function updateMeeting(){
         headers: {
             "X-CSRFToken": getCookie("csrftoken")
         },
-        body: JSON.stringify({
-            title,
-            link
-        })
+        body: JSON.stringify({ title, link })
     })
-    .then(({res, data}) => {
+    .then(async (res) => {
 
-        if(res.ok){
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
             document.getElementById("msg").style.color = "#16a34a";
             document.getElementById("msg").innerText =
                 "Meeting updated successfully!";
@@ -201,8 +254,11 @@ function updateMeeting(){
         document.getElementById("msg").style.color = "#dc2626";
         document.getElementById("msg").innerText = "Network error";
     });
-
 }
+
+
+/* INIT */
+loadMeeting();
 
 </script>
 

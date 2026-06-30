@@ -181,46 +181,82 @@ body{
 </div>
 
 <script>
+
 function getCookie(name) {
     let cookieValue = null;
+
     if (document.cookie && document.cookie !== '') {
         const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
+
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+
             if (cookie.startsWith(name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
             }
         }
     }
+
     return cookieValue;
 }
 
-function sendReset() {
 
-    fetch("/accounts/api/forgot-password/", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken")
-        },
-        body: JSON.stringify({
-            email: document.getElementById("email").value
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
+/* SEND RESET LINK */
+async function sendReset() {
 
-        document.getElementById("msg").innerText =
-            data.message || data.error || "Done";
+    const email = document.getElementById("email").value.trim();
+    const msg = document.getElementById("msg");
+    const btn = document.querySelector(".btn");
 
-        document.getElementById("msg").style.color =
-            data.message ? "green" : "red";
-    })
-    .catch(() => {
-        document.getElementById("msg").innerText = "Error";
-    });
+    msg.innerText = "";
+    msg.style.color = "#dc2626";
+
+    if (!email) {
+        msg.innerText = "Please enter your email address";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    try {
+
+        const res = await fetch("/accounts/api/forgot-password/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+
+            msg.style.color = "#16a34a";
+            msg.innerText = data.message || "Reset link sent successfully";
+
+        } else {
+
+            msg.style.color = "#dc2626";
+            msg.innerText = data.error || data.detail || "Failed to send reset link";
+        }
+
+    } catch (err) {
+
+        console.error(err);
+        msg.style.color = "#dc2626";
+        msg.innerText = "Network error";
+
+    } finally {
+
+        btn.disabled = false;
+        btn.innerText = "Send Reset Link";
+    }
 }
+
 </script>
 
 </body>

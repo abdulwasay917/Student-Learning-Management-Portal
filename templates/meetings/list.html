@@ -153,46 +153,103 @@ body{
 
 <script>
 
-const access = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-function authFetch(url, options = {}) {
-    return fetch(url, {
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const response = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!response.ok) return false;
+
+        const data = await response.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
+        }
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+}
+
+
+/* MAIN AUTH FETCH (WITH AUTO REFRESH) */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...(options.headers || {}),
             ...(access ? { "Authorization": "Bearer " + access } : {})
         }
-    }).then(async res => {
-        const data = await res.json().catch(() => ({}));
+    });
 
-        if (res.status === 401) {
+    // token expired → try refresh
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
             window.location.href = "/accounts/login/";
+            return response;
         }
 
-        return { res, data };
-    });
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
 }
+
 
 let user = {};
 
 /* USER */
-function loadUser(){
+function loadUser() {
     return authFetch("/core/api/dashboard/")
-    .then(({data}) => {
+    .then(async (res) => {
+
+        const data = await res.json().catch(() => ({}));
         user = data;
 
-        if(user.role === "teacher" || user.is_superuser){
+        if (user.role === "teacher" || user.is_superuser) {
             document.getElementById("createBtn").style.display = "block";
         }
     });
 }
 
+
 /* MEETINGS */
-function loadMeetings(){
+function loadMeetings() {
 
     authFetch("/meetings/api/")
-    .then(({data}) => {
+    .then(async (res) => {
+
+        const data = await res.json().catch(() => []);
 
         let box = document.getElementById("meetings");
         box.innerHTML = "";
@@ -239,9 +296,10 @@ function loadMeetings(){
             </div>`;
         });
 
-    });
-
+    })
+    .catch(err => console.error(err));
 }
+
 
 /* EXPIRY CHECK */
 function check(exp){
@@ -252,20 +310,26 @@ function check(exp){
     return true;
 }
 
+
 /* DELETE */
 function del(id){
+
     authFetch(`/meetings/api/delete/${id}/`, {
         method: "DELETE",
         headers: {
             "X-CSRFToken": getCookie("csrftoken")
         }
-    }).then(() => loadMeetings());
+    })
+    .then(() => loadMeetings())
+    .catch(err => console.error(err));
 }
+
 
 /* EDIT */
 function edit(id){
     window.location.href = `/meetings/edit/${id}/`;
 }
+
 
 /* CSRF */
 function getCookie(name){
@@ -277,6 +341,7 @@ function getCookie(name){
     });
     return v;
 }
+
 
 /* INIT */
 loadUser().then(loadMeetings);

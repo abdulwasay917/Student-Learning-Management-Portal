@@ -129,52 +129,103 @@ tr:hover{
 
 <script>
 
-function authFetch(url, options = {}) {
-    const token = localStorage.getItem("access");
+async function refreshAccessToken() {
 
-    return fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
+
+    try {
+        const res = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
         }
-    });
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
-// ================= LOAD TEACHERS =================
 
-authFetch("/accounts/api/teachers/", {
-    credentials: "include"
-})
-.then(async res => {
+/* UNIFIED AUTH FETCH */
+async function authFetch(url, options = {}) {
 
-    if (!res.ok) {
-        if (res.status === 401) {
-            alert("Session expired or unauthorized. Please login again.");
-            window.location.href = "/accounts/login/";
-            return;
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
         }
-        throw new Error("Failed to load teachers");
+    });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
     }
 
-    return res.json();
-})
-.then(data => {
+    return response;
+}
 
-    let rows = "";
+
+/* LOAD TEACHERS */
+async function loadTeachers() {
+
+    const res = await authFetch("/accounts/api/teachers/");
+
+    if (res.status === 401) {
+        alert("Session expired or unauthorized. Please login again.");
+        window.location.href = "/accounts/login/";
+        return;
+    }
+
+    const data = await res.json().catch(() => []);
+
+    let tbody = document.getElementById("teachers-table");
 
     if (!data || data.length === 0) {
-        rows = `
+        tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="empty">
                     No teachers found
                 </td>
             </tr>
         `;
-        document.getElementById("teachers-table").innerHTML = rows;
         return;
     }
+
+    let rows = "";
 
     data.forEach(teacher => {
 
@@ -195,40 +246,21 @@ authFetch("/accounts/api/teachers/", {
         `;
     });
 
-    document.getElementById("teachers-table").innerHTML = rows;
-
-})
-.catch(error => {
-
-    console.log(error);
-
-    document.getElementById("teachers-table").innerHTML = `
-        <tr>
-            <td colspan="6" class="empty">
-                Failed to load teachers
-            </td>
-        </tr>
-    `;
-});
+    tbody.innerHTML = rows;
+}
 
 
-// ================= DELETE USER =================
-
+/* DELETE USER */
 function deleteUser(userId){
 
     if(!confirm("Delete this teacher?")) return;
 
-    const token = localStorage.getItem("access");
-
-    fetch(`/accounts/api/delete-user/${userId}/`, {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-            ...(token ? { "Authorization": "Bearer " + token } : {})
-        }
+    authFetch(`/accounts/api/delete-user/${userId}/`, {
+        method: "DELETE"
     })
     .then(async res => {
-        const data = await res.json();
+
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
             alert(data.error || "Delete failed");
@@ -236,14 +268,18 @@ function deleteUser(userId){
         }
 
         alert(data.message || "Deleted successfully");
-        location.reload();
+
+        loadTeachers(); // no full reload needed
     })
     .catch(err => {
-        console.log(err);
+        console.error(err);
         alert("Request failed");
     });
-
 }
+
+
+/* INIT */
+loadTeachers();
 
 </script>
 

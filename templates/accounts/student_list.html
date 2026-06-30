@@ -137,25 +137,87 @@ tr:hover{
 
 <script>
 
-function authFetch(url, options = {}) {
+async function refreshAccessToken() {
 
-    const token = localStorage.getItem("access");
+    const refresh = localStorage.getItem("refresh");
+    if (!refresh) return false;
 
-    return fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(token ? { "Authorization": "Bearer " + token } : {})
+    try {
+        const res = await fetch("/token/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+
+        localStorage.setItem("access", data.access);
+
+        if (data.refresh) {
+            localStorage.setItem("refresh", data.refresh);
         }
-    });
+
+        return true;
+
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 }
 
-// ================= LOAD STUDENTS =================
 
-authFetch("/accounts/api/students/")
-.then(res => res.json())
-.then(data => {
+/* UNIFIED AUTH FETCH */
+async function authFetch(url, options = {}) {
+
+    let access = localStorage.getItem("access");
+
+    let response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            ...(access ? { "Authorization": "Bearer " + access } : {})
+        }
+    });
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshAccessToken();
+
+        if (!refreshed) {
+            localStorage.removeItem("access");
+            localStorage.removeItem("refresh");
+            window.location.href = "/accounts/login/";
+            return response;
+        }
+
+        access = localStorage.getItem("access");
+
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {}),
+                ...(access ? { "Authorization": "Bearer " + access } : {})
+            }
+        });
+    }
+
+    return response;
+}
+
+
+/* LOAD STUDENTS */
+async function loadStudents() {
+
+    const res = await authFetch("/accounts/api/students/");
+
+    if (res.status === 401) {
+        window.location.href = "/accounts/login/";
+        return;
+    }
+
+    const data = await res.json().catch(() => ({}));
 
     const students = data.students || [];
     const isSuperuser = data.is_superuser;
@@ -166,79 +228,76 @@ authFetch("/accounts/api/students/")
 
     let rows = "";
 
-    if (students.length === 0) {
+    if (!students.length) {
         rows = `
             <tr>
-                <td colspan="7" class="empty">No students found</td>
+                <td colspan="7" class="empty">
+                    No students found
+                </td>
             </tr>
         `;
+    } else {
+
+        students.forEach(student => {
+
+            rows += `
+                <tr>
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td>${student.username}</td>
+                    <td>${student.email}</td>
+                    <td>${student.phone || "N/A"}</td>
+                    <td>${student.roll_number || "N/A"}</td>
+            `;
+
+            if (isSuperuser) {
+                rows += `
+                    <td>
+                        <button class="delete-btn"
+                            onclick="deleteUser(${student.user_id})">
+                            Delete
+                        </button>
+                    </td>
+                `;
+            }
+
+            rows += `</tr>`;
+        });
     }
 
-    students.forEach(student => {
-
-        rows += `
-            <tr>
-                <td>${student.id}</td>
-                <td>${student.name}</td>
-                <td>${student.username}</td>
-                <td>${student.email}</td>
-                <td>${student.phone || "N/A"}</td>
-                <td>${student.roll_number || "N/A"}</td>
-        `;
-
-        if (isSuperuser) {
-            rows += `
-                <td>
-                    <button class="delete-btn"
-                        onclick="deleteUser(${student.user_id})">
-                        Delete
-                    </button>
-                </td>
-            `;
-        }
-
-        rows += `</tr>`;
-    });
-
     document.getElementById("students-table").innerHTML = rows;
-
-})
-.catch(() => {
-
-    document.getElementById("students-table").innerHTML = `
-        <tr>
-            <td colspan="7" class="empty">
-                Failed to load students
-            </td>
-        </tr>
-    `;
-});
+}
 
 
-// ================= DELETE USER =================
-
+/* DELETE USER */
 function deleteUser(userId) {
 
     if (!confirm("Are you sure?")) return;
 
-    const token = localStorage.getItem("access");
-
-    fetch(`/accounts/api/delete-user/${userId}/`, {
-        method: "DELETE",
-        headers: {
-            "Content-Type": "application/json",
-            ...(token ? { "Authorization": "Bearer " + token } : {})
-        }
+    authFetch(`/accounts/api/delete-user/${userId}/`, {
+        method: "DELETE"
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message || data.error);
-        location.reload();
+    .then(async res => {
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            alert(data.error || "Delete failed");
+            return;
+        }
+
+        alert(data.message || "Deleted successfully");
+
+        loadStudents(); // no full reload
     })
     .catch(() => {
         alert("Request failed");
     });
 }
+
+
+/* INIT */
+loadStudents();
 
 </script>
 
