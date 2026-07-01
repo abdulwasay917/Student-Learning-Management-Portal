@@ -41,6 +41,8 @@ class CreateUserAPI(APIView):
 
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
+        if not password:
+            return Response({"error": "Password is required"}, status=400)
         if len(password) < 8:
             return Response({"error": "Password must be at least 8 characters"}, status=400)
 

@@ -3,8 +3,10 @@ from rest_framework.response import Response
 from assignments.models import Assignment,Submission
 from assignments.api.serializers import AssignmentSerializer,SubmissionSerializer
 from accounts.models import StudentProfile
+from assignments.api.permissions import IsTeacherOrAdmin
 
 class AssignmentListAPI(APIView):
+
     def get(self, request):
         assignments = Assignment.objects.all().order_by("-created_at")
         data = []
@@ -133,6 +135,7 @@ class SubmitAssignmentAPI(APIView):
 
 
 class SubmittedStudentsAPI(APIView):
+    permission_classes = [IsTeacherOrAdmin]
 
     def get(self, request, pk):
 
@@ -175,6 +178,7 @@ class SubmittedStudentsAPI(APIView):
 
 
 class NotSubmittedStudentsAPI(APIView):
+    permission_classes = [IsTeacherOrAdmin]
 
     def get(self, request, pk):
 
@@ -216,6 +220,7 @@ class NotSubmittedStudentsAPI(APIView):
 
 
 class SubmissionDetailAPI(APIView):
+    permission_classes = [IsTeacherOrAdmin]
 
     def get(self, request, pk):
 
