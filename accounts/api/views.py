@@ -4,15 +4,15 @@ from django.conf import settings
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-
 from accounts.models import TeacherProfile, StudentProfile
 import re
+
+
 
 User = get_user_model()
 
@@ -70,10 +70,20 @@ class CreateUserAPI(APIView):
                 bio=data.get("bio", ""),
                 expertise=data.get("expertise", "")
             )
-        else:
+        elif role == "student":
+            roll_number = data.get("roll_number")
+
+            if not roll_number:
+                last_student = StudentProfile.objects.order_by("-id").first()
+
+                if last_student:
+                    roll_number = f"{last_student.id + 1:04d}"
+                else:
+                    roll_number = "0001"
+
             StudentProfile.objects.create(
                 user=user,
-                roll_number=data.get("roll_number", "")
+                roll_number=roll_number
             )
 
         return Response(
