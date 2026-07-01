@@ -111,153 +111,146 @@ button:hover{
 
 <script>
 
-async function refreshAccessToken() {
-
-    const refresh = localStorage.getItem("refresh");
-    if (!refresh) return false;
-
-    try {
-        const response = await fetch("/token/refresh/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh })
-        });
-
-        if (!response.ok) return false;
-
-        const data = await response.json();
-
-        localStorage.setItem("access", data.access);
-
-        if (data.refresh) {
-            localStorage.setItem("refresh", data.refresh);
-        }
-
-        return true;
-
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+/* =========================
+   AUTH TOKEN
+========================= */
+function getAccessToken() {
+    return localStorage.getItem("access_token");
 }
 
-
-/* GLOBAL AUTH FETCH (WITH REFRESH SUPPORT) */
-async function authFetch(url, options = {}) {
-
-    let access = localStorage.getItem("access");
-
-    let response = await fetch(url, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-            ...(access ? { "Authorization": "Bearer " + access } : {})
-        }
-    });
-
-    if (response.status === 401) {
-
-        const refreshed = await refreshAccessToken();
-
-        if (!refreshed) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-            window.location.href = "/accounts/login/";
-            return response;
-        }
-
-        access = localStorage.getItem("access");
-
-        response = await fetch(url, {
-            ...options,
-            headers: {
-                "Content-Type": "application/json",
-                ...(options.headers || {}),
-                ...(access ? { "Authorization": "Bearer " + access } : {})
-            }
-        });
-    }
-
-    return response;
+/* =========================
+   MESSAGE
+========================= */
+function showMsg(text, type = "error") {
+    const msg = document.getElementById("msg");
+    msg.innerText = text;
+    msg.style.color = type === "success" ? "#16a34a" : "#dc2626";
 }
 
+/* =========================
+   GET ID
+========================= */
+const id = window.location.pathname.split("/").filter(Boolean).pop();
 
-let id = window.location.pathname.split("/").filter(Boolean).pop();
-
-
-/* CSRF */
-function getCookie(name){
-    let v = null;
-    document.cookie.split(';').forEach(c=>{
-        if(c.trim().startsWith(name+'=')){
-            v = decodeURIComponent(c.trim().split('=')[1]);
-        }
-    });
-    return v;
-}
-
-
-/* LOAD SINGLE MEETING (OPTIMIZED) */
+/* =========================
+   LOAD MEETING
+========================= */
 async function loadMeeting() {
 
-    const res = await authFetch(`/meetings/api/${id}/`);
-    const meeting = await res.json().catch(() => null);
+    const loading = document.getElementById("loading");
 
-    if (!meeting) {
-        document.getElementById("loading").innerText = "Meeting not found";
-        return;
-    }
+    try {
 
-    document.getElementById("title").value = meeting.title;
-    document.getElementById("link").value = meeting.link;
+        const res = await fetch(`/meetings/api/${id}/`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
+            }
+        });
 
-    document.getElementById("loading").style.display = "none";
-}
-
-
-/* UPDATE MEETING */
-function updateMeeting() {
-
-    let title = document.getElementById("title").value;
-    let link = document.getElementById("link").value;
-
-    if (!title || !link) {
-        document.getElementById("msg").style.color = "#dc2626";
-        document.getElementById("msg").innerText = "All fields are required";
-        return;
-    }
-
-    authFetch(`/meetings/api/update/${id}/`, {
-        method: "PUT",
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken")
-        },
-        body: JSON.stringify({ title, link })
-    })
-    .then(async (res) => {
-
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok) {
-            document.getElementById("msg").style.color = "#16a34a";
-            document.getElementById("msg").innerText =
-                "Meeting updated successfully!";
-        } else {
-            document.getElementById("msg").style.color = "#dc2626";
-            document.getElementById("msg").innerText =
-                data.error || "Update failed";
+        if (res.status === 401) {
+            window.location.href = "/accounts/login/";
+            return;
         }
 
-    })
-    .catch(() => {
-        document.getElementById("msg").style.color = "#dc2626";
-        document.getElementById("msg").innerText = "Network error";
-    });
+        const meeting = await res.json().catch(() => null);
+
+        if (!meeting) {
+            loading.innerText = "Meeting not found";
+            return;
+        }
+
+        document.getElementById("title").value = meeting.title || "";
+        document.getElementById("link").value = meeting.link || "";
+
+        loading.style.display = "none";
+
+    } catch (err) {
+
+        console.error(err);
+        loading.innerText = "Error loading meeting";
+    }
 }
 
+/* =========================
+   VALIDATION
+========================= */
+function validate(data) {
 
-/* INIT */
+    if (!data.title || !data.link) {
+        return "All fields are required";
+    }
+
+    return null;
+}
+
+/* =========================
+   UPDATE MEETING
+========================= */
+async function updateMeeting() {
+
+    const title = document.getElementById("title").value.trim();
+    const link = document.getElementById("link").value.trim();
+    const btn = document.querySelector("button");
+
+    const data = { title, link };
+
+    const error = validate(data);
+    if (error) {
+        showMsg(error, "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Updating...";
+
+    try {
+
+        const res = await fetch(`/meetings/api/update/${id}/`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            showMsg(result.error || "Update failed", "error");
+            return;
+        }
+
+        showMsg("Meeting updated successfully!", "success");
+
+        setTimeout(() => {
+            window.location.href = "/meetings/";
+        }, 900);
+
+    } catch (err) {
+
+        console.error(err);
+        showMsg("Network error", "error");
+
+    } finally {
+
+        btn.disabled = false;
+        btn.innerText = "Update Meeting";
+    }
+}
+
+/* =========================
+   INIT
+========================= */
 loadMeeting();
 
 </script>

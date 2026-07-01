@@ -73,78 +73,16 @@ body{
 
 <script>
 
-async function refreshAccessToken() {
-
-    const refresh = localStorage.getItem("refresh");
-    if (!refresh) return false;
-
-    try {
-        const res = await fetch("/token/refresh/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh })
-        });
-
-        if (!res.ok) return false;
-
-        const data = await res.json();
-
-        localStorage.setItem("access", data.access);
-
-        if (data.refresh) {
-            localStorage.setItem("refresh", data.refresh);
-        }
-
-        return true;
-
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+/* =========================
+   AUTH TOKEN
+========================= */
+function getAccessToken() {
+    return localStorage.getItem("access_token");
 }
 
-
-/* UNIFIED AUTH FETCH */
-async function authFetch(url, options = {}) {
-
-    let access = localStorage.getItem("access");
-
-    let response = await fetch(url, {
-        ...options,
-        headers: {
-            ...(options.body ? {} : {}), // GET safe
-            ...(options.headers || {}),
-            ...(access ? { "Authorization": "Bearer " + access } : {})
-        }
-    });
-
-    if (response.status === 401) {
-
-        const refreshed = await refreshAccessToken();
-
-        if (!refreshed) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-            window.location.href = "/accounts/login/";
-            return response;
-        }
-
-        access = localStorage.getItem("access");
-
-        response = await fetch(url, {
-            ...options,
-            headers: {
-                ...(options.headers || {}),
-                ...(access ? { "Authorization": "Bearer " + access } : {})
-            }
-        });
-    }
-
-    return response;
-}
-
-
-/* SAFE ID EXTRACTION */
+/* =========================
+   GET ASSIGNMENT ID
+========================= */
 function getAssignmentId() {
     const parts = window.location.pathname.split("/").filter(Boolean);
     return parts[parts.length - 1];
@@ -152,46 +90,75 @@ function getAssignmentId() {
 
 const assignmentId = getAssignmentId();
 
-const rows = document.getElementById("rows");
-
-
-/* LOAD DATA */
+/* =========================
+   LOAD NOT SUBMITTED STUDENTS
+========================= */
 async function loadNotSubmitted() {
 
-    const res = await authFetch(`/assignments/api/not-submitted/${assignmentId}/`);
+    const rows = document.getElementById("rows");
 
-    if (res.status === 401) {
-        alert("Session expired. Please login again.");
-        window.location.href = "/accounts/login/";
-        return;
-    }
+    try {
 
-    const data = await res.json().catch(() => []);
+        const res = await fetch(`/assignments/api/not-submitted/${assignmentId}/`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
+            }
+        });
 
-    rows.innerHTML = "";
+        if (res.status === 401) {
+            alert("Session expired. Please login again.");
+            window.location.href = "/accounts/login/";
+            return;
+        }
 
-    if (!data || data.length === 0) {
+        const data = await res.json().catch(() => []);
+
+        rows.innerHTML = "";
+
+        if (!data || data.length === 0) {
+
+            rows.innerHTML = `
+                <div class="empty">
+                    All students have submitted this assignment.
+                </div>
+            `;
+
+            return;
+        }
+
+        data.forEach(student => {
+
+            rows.innerHTML += `
+                <div class="row">
+
+                    <div>${student.student_name || "-"}</div>
+
+                    <div>${student.roll_number || "-"}</div>
+
+                </div>
+            `;
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
         rows.innerHTML = `
-            <div class="empty">
-                All students have submitted this assignment.
+            <div class="empty" style="color:red;">
+                Failed to load data
             </div>
         `;
-        return;
     }
-
-    data.forEach(student => {
-
-        rows.innerHTML += `
-            <div class="row">
-                <div>${student.student_name}</div>
-                <div>${student.roll_number}</div>
-            </div>
-        `;
-    });
 }
 
-
-/* INIT */
+/* =========================
+   INIT
+========================= */
 loadNotSubmitted();
 
 </script>

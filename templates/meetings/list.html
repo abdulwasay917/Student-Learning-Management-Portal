@@ -184,198 +184,205 @@
 
 <script>
 
-    async function refreshAccessToken() {
+/* =========================
+   AUTH TOKEN
+========================= */
+function getAccessToken() {
+    return localStorage.getItem("access_token");
+}
 
-        const refresh = localStorage.getItem("refresh");
-        if (!refresh) return false;
+/* =========================
+   USER DATA
+========================= */
+let user = {};
 
-        try {
-            const response = await fetch("/token/refresh/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({refresh})
-            });
+/* =========================
+   LOAD USER
+========================= */
+async function loadUser() {
 
-            if (!response.ok) return false;
+    try {
 
-            const data = await response.json();
-
-            localStorage.setItem("access", data.access);
-
-            if (data.refresh) {
-                localStorage.setItem("refresh", data.refresh);
-            }
-
-            return true;
-
-        } catch (err) {
-            console.error(err);
-            return false;
-        }
-    }
-
-
-    /* MAIN AUTH FETCH (WITH AUTO REFRESH) */
-    async function authFetch(url, options = {}) {
-
-        let access = localStorage.getItem("access");
-
-        let response = await fetch(url, {
-            ...options,
+        const res = await fetch("/core/api/dashboard/", {
             headers: {
                 "Content-Type": "application/json",
-                ...(options.headers || {}),
-                ...(access ? {"Authorization": "Bearer " + access} : {})
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
             }
         });
 
-        // token expired → try refresh
-        if (response.status === 401) {
-
-            const refreshed = await refreshAccessToken();
-
-            if (!refreshed) {
-                localStorage.removeItem("access");
-                localStorage.removeItem("refresh");
-                window.location.href = "/accounts/login/";
-                return response;
-            }
-
-            access = localStorage.getItem("access");
-
-            response = await fetch(url, {
-                ...options,
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(options.headers || {}),
-                    ...(access ? {"Authorization": "Bearer " + access} : {})
-                }
-            });
+        if (!res.ok) {
+            window.location.href = "/accounts/login/";
+            return;
         }
 
-        return response;
+        user = await res.json().catch(() => ({}));
+
+        if (user.role === "teacher" || user.is_superuser) {
+            document.getElementById("createBtn").style.display = "block";
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
     }
+}
 
+/* =========================
+   LOAD MEETINGS
+========================= */
+async function loadMeetings() {
 
-    let user = {};
+    try {
 
-    /* USER */
-    function loadUser() {
-        return authFetch("/core/api/dashboard/")
-            .then(async (res) => {
+        const res = await fetch("/meetings/api/", {
+            headers: {
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
+            }
+        });
 
-                const data = await res.json().catch(() => ({}));
-                user = data;
+        if (!res.ok) return;
 
-                if (user.role === "teacher" || user.is_superuser) {
-                    document.getElementById("createBtn").style.display = "block";
-                }
-            });
-    }
+        const data = await res.json().catch(() => []);
 
+        const box = document.getElementById("meetings");
+        box.innerHTML = "";
 
-    /* MEETINGS */
-    function loadMeetings() {
+        data.forEach(m => {
 
-        authFetch("/meetings/api/")
-            .then(async (res) => {
+            const canEdit =
+                user.is_superuser ||
+                m.teacher_name === user.name;
 
-                const data = await res.json().catch(() => []);
+            box.innerHTML += `
+                <div class="card">
 
-                let box = document.getElementById("meetings");
-                box.innerHTML = "";
+                    <div class="top">
 
-                data.forEach(m => {
+                        <div>
+                            <div class="title">${m.title}</div>
+                            <div class="sub">
+                                Teacher: ${m.teacher_name}
+                            </div>
+                        </div>
 
-                    let canEdit =
-                        user.is_superuser ||
-                        m.teacher_name === user.name;
+                        ${canEdit ? `
+                        <div class="actions">
+                            <button class="edit"
+                                onclick="edit(${m.id})">
+                                Edit
+                            </button>
 
-                    box.innerHTML += `
-            <div class="card">
+                            <button class="del"
+                                onclick="del(${m.id})">
+                                Delete
+                            </button>
+                        </div>` : ""}
 
-                <div class="top">
-
-                    <div>
-                        <div class="title">${m.title}</div>
-                        <div class="sub">Teacher: ${m.teacher_name}</div>
                     </div>
 
-                    ${canEdit ? `
-                    <div class="actions">
-                        <button class="edit" onclick="edit(${m.id})">Edit</button>
-                        <button class="del" onclick="del(${m.id})">Delete</button>
-                    </div>` : ""}
+                    <div class="meta">
+                        Created:
+                        ${new Date(m.created_at).toLocaleString()}
+                    </div>
 
-                </div>
+                    <div class="meta">
+                        Expires:
+                        ${new Date(m.expires_at).toLocaleString()}
+                    </div>
 
-                <div class="meta">
-                    Created: ${new Date(m.created_at).toLocaleString()}
-                </div>
+                    <a class="join-btn"
+                       href="${m.link}"
+                       target="_blank"
+                       onclick="return check('${m.expires_at}')">
+                       Join Meeting
+                    </a>
 
-                <div class="meta">
-                    Expires: ${new Date(m.expires_at).toLocaleString()}
-                </div>
+                </div>`;
+        });
 
-                <a class="join-btn"
-                   href="${m.link}"
-                   target="_blank"
-                   onclick="return check('${m.expires_at}')">
-                   Join Meeting
-                </a>
+    } catch (err) {
 
-            </div>`;
-                });
+        console.error(err);
 
-            })
-            .catch(err => console.error(err));
+    }
+}
+
+/* =========================
+   CHECK EXPIRY
+========================= */
+function check(exp) {
+
+    if (new Date() > new Date(exp)) {
+        alert("This meeting has expired!");
+        return false;
     }
 
+    return true;
+}
 
-    /* EXPIRY CHECK */
-    function check(exp) {
-        if (new Date() > new Date(exp)) {
-            alert("This meeting has expired!");
-            return false;
-        }
-        return true;
-    }
+/* =========================
+   DELETE MEETING
+========================= */
+async function del(id) {
 
+    if (!confirm("Delete this meeting?")) return;
 
-    /* DELETE */
-    function del(id) {
+    try {
 
-        authFetch(`/meetings/api/delete/${id}/`, {
+        const res = await fetch(`/meetings/api/delete/${id}/`, {
             method: "DELETE",
             headers: {
-                "X-CSRFToken": getCookie("csrftoken")
-            }
-        })
-            .then(() => loadMeetings())
-            .catch(err => console.error(err));
-    }
-
-
-    /* EDIT */
-    function edit(id) {
-        window.location.href = `/meetings/edit/${id}/`;
-    }
-
-
-    /* CSRF */
-    function getCookie(name) {
-        let v = null;
-        document.cookie.split(';').forEach(c => {
-            if (c.trim().startsWith(name + '=')) {
-                v = decodeURIComponent(c.trim().split('=')[1]);
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
             }
         });
-        return v;
+
+        if (!res.ok) {
+            alert("Unable to delete meeting.");
+            return;
+        }
+
+        loadMeetings();
+
+    } catch (err) {
+
+        console.error(err);
+
     }
+}
 
+/* =========================
+   EDIT MEETING
+========================= */
+function edit(id) {
 
-    /* INIT */
-    loadUser().then(loadMeetings);
+    window.location.href = `/meetings/edit/${id}/`;
+}
+
+/* =========================
+   INIT
+========================= */
+async function init() {
+
+    await loadUser();
+    await loadMeetings();
+}
+
+init();
 
 </script>
 

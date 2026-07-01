@@ -101,77 +101,25 @@ h1{
 
 <script>
 
-async function refreshAccessToken() {
-
-    const refresh = localStorage.getItem("refresh");
-    if (!refresh) return false;
-
-    try {
-        const res = await fetch("/token/refresh/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh })
-        });
-
-        if (!res.ok) return false;
-
-        const data = await res.json();
-
-        localStorage.setItem("access", data.access);
-
-        if (data.refresh) {
-            localStorage.setItem("refresh", data.refresh);
-        }
-
-        return true;
-
-    } catch (err) {
-        console.error(err);
-        return false;
-    }
+/* =========================
+   AUTH TOKEN
+========================= */
+function getAccessToken() {
+    return localStorage.getItem("access_token");
 }
 
+/* =========================
+   SAFE TEXT SETTER
+========================= */
+function setText(id, value) {
 
-/* UNIFIED AUTH FETCH */
-async function authFetch(url, options = {}) {
-
-    let access = localStorage.getItem("access");
-
-    let response = await fetch(url, {
-        ...options,
-        headers: {
-            ...(options.headers || {}),
-            ...(access ? { "Authorization": "Bearer " + access } : {})
-        }
-    });
-
-    if (response.status === 401) {
-
-        const refreshed = await refreshAccessToken();
-
-        if (!refreshed) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-            window.location.href = "/accounts/login/";
-            return response;
-        }
-
-        access = localStorage.getItem("access");
-
-        response = await fetch(url, {
-            ...options,
-            headers: {
-                ...(options.headers || {}),
-                ...(access ? { "Authorization": "Bearer " + access } : {})
-            }
-        });
-    }
-
-    return response;
+    const el = document.getElementById(id);
+    if (el) el.innerText = value || "N/A";
 }
 
-
-/* SAFE ID EXTRACTION */
+/* =========================
+   GET SUBMISSION ID
+========================= */
 function getSubmissionId() {
     const parts = window.location.pathname.split("/").filter(Boolean);
     return parts[parts.length - 1];
@@ -179,54 +127,65 @@ function getSubmissionId() {
 
 const submissionId = getSubmissionId();
 
-
-/* SAFE TEXT SETTER */
-const setText = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.innerText = value || "N/A";
-};
-
-
-/* LOAD SUBMISSION */
+/* =========================
+   LOAD SUBMISSION
+========================= */
 async function loadSubmission() {
 
-    const res = await authFetch(`/assignments/api/submission/${submissionId}/`);
+    try {
 
-    if (res.status === 401) {
-        alert("Session expired. Please login again.");
-        window.location.href = "/accounts/login/";
-        return;
-    }
+        const res = await fetch(`/assignments/api/submission/${submissionId}/`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(getAccessToken()
+                    ? {
+                        "Authorization": "Bearer " + getAccessToken()
+                    }
+                    : {})
+            }
+        });
 
-    const data = await res.json().catch(() => null);
+        if (res.status === 401) {
+            window.location.href = "/accounts/login/";
+            return;
+        }
 
-    if (!data) {
-        setText("student_name", "Error loading data");
-        return;
-    }
+        const data = await res.json().catch(() => null);
 
-    setText("student_name", data.student_name);
-    setText("roll_number", data.roll_number);
-    setText("assignment_title", data.assignment_title);
+        if (!data) {
+            setText("student_name", "Error loading data");
+            return;
+        }
 
-    if (data.submitted_at) {
-        setText("submitted_at", new Date(data.submitted_at).toLocaleString());
-    } else {
-        setText("submitted_at", "Not available");
-    }
+        setText("student_name", data.student_name);
+        setText("roll_number", data.roll_number);
+        setText("assignment_title", data.assignment_title);
 
-    const fileLink = document.getElementById("file_link");
+        if (data.submitted_at) {
+            setText("submitted_at", new Date(data.submitted_at).toLocaleString());
+        } else {
+            setText("submitted_at", "Not available");
+        }
 
-    if (data.file) {
-        fileLink.href = data.file;
-        fileLink.style.display = "inline-block";
-    } else {
-        fileLink.style.display = "none";
+        const fileLink = document.getElementById("file_link");
+
+        if (data.file) {
+            fileLink.href = data.file;
+            fileLink.style.display = "inline-block";
+        } else {
+            fileLink.style.display = "none";
+        }
+
+    } catch (err) {
+
+        console.error(err);
+        setText("student_name", "Failed to load submission");
     }
 }
 
-
-/* INIT */
+/* =========================
+   INIT
+========================= */
 loadSubmission();
 
 </script>

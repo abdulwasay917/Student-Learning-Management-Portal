@@ -25,7 +25,7 @@ body{
 .login-card{
     width:100%;
     max-width:420px;
-    background:#ffffff;
+    background:#fff;
     padding:40px;
     border-radius:20px;
     box-shadow:0 20px 50px rgba(0,0,0,0.25);
@@ -62,17 +62,10 @@ body{
 
 .form-control{
     width:100%;
-    padding:14px 16px;
+    padding:14px;
     border:1px solid #dbe2ea;
     border-radius:12px;
     font-size:15px;
-    transition:.3s;
-}
-
-.form-control:focus{
-    outline:none;
-    border-color:#2563eb;
-    box-shadow:0 0 0 4px rgba(37,99,235,.12);
 }
 
 .login-btn{
@@ -85,126 +78,105 @@ body{
     font-size:16px;
     font-weight:600;
     cursor:pointer;
-    transition:.3s;
 }
 
-.login-btn:hover{
-    background:#1d4ed8;
-}
-
-.forgot-password{
-    text-align:right;
-    margin-top:12px;
-}
-
-.forgot-password a{
-    text-decoration:none;
-    color:#2563eb;
-    font-size:14px;
-    font-weight:500;
-    transition:.3s;
-}
-
-.forgot-password a:hover{
-    color:#1d4ed8;
-    text-decoration:underline;
+.login-btn:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
 }
 
 #msg{
-    margin-top:18px;
+    margin-top:15px;
     text-align:center;
     font-size:14px;
     min-height:20px;
-    color:#dc2626;
 }
 
-.footer-text{
-    margin-top:20px;
-    text-align:center;
-    color:#94a3b8;
-    font-size:13px;
-}
-
-@media(max-width:480px){
-    .login-card{
-        padding:28px;
-    }
-
-    .logo h2{
-        font-size:26px;
-    }
-}
 </style>
-
 </head>
+
 <body>
 
 <div class="login-card">
+
     <div class="logo">
         <h2>Welcome Back</h2>
-        <p>Sign in to access your dashboard</p>
+        <p>Secure Login Portal</p>
     </div>
 
     {% csrf_token %}
 
     <div class="form-group">
         <label>Username</label>
-        <input
-            type="text"
-            id="username"
-            class="form-control"
-            placeholder="Enter your username">
+        <input type="text" id="username" class="form-control">
     </div>
 
     <div class="form-group">
         <label>Password</label>
-        <input
-            type="password"
-            id="password"
-            class="form-control"
-            placeholder="Enter your password">
+        <input type="password" id="password" class="form-control">
     </div>
 
-    <button class="login-btn" onclick="loginUser()">
-        Login
-    </button>
-
-    <div class="forgot-password">
-        <a href="/accounts/forgot-password/">
-            Forgot Password?
-        </a>
-    </div>
+    <button class="login-btn" onclick="loginUser()">Login</button>
 
     <p id="msg"></p>
-
-    <div class="footer-text">
-        Secure Authentication Portal
-    </div>
 </div>
 
 <script>
+/* =========================
+   🔑 YOUR PUBLIC KEY HERE
+========================= */
+const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyi/uHP7Cea0ONcdBGJPP
+Am0s58A0JISs5zuhnrDoELCfijKbifEfGu+HA4W6HW5OtDeIuV0Xg2suVOhhi3tX
+3ygH+l7nCm6PYpDnBJG37o2vla+Gt2ionI/0CFZ9zRFil+1spdO1tb9Lsqz3EGV0
+fQZ/HKIlsw+Gltly/ThXO9Qe+3+akIWrfIlQ4B0G+VDA6BOVVXSweNIdBlea+9AP
+rb+t2BcasPvrEBVDwSGQT5YkAqHX5AOuU8teQyj5TPw8uPTVukWKfgRNjvHchp1y
+jd4ynEwwFw79PseDGNaxIBGmAk8/9NxBqxn2DOvMwqPao7bn4iVBowUEymVJ0x45
+6QIDAQAB
+-----END PUBLIC KEY-----`;
 
-function getCookie(name) {
-    let cookieValue = null;
+/* =========================
+   Convert PEM → CryptoKey
+========================= */
+async function importPublicKey(pem) {
+    const binary = window.atob(
+        pem.replace(/-----[^-]+-----/g, "").replace(/\s/g, "")
+    );
 
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
+    const bytes = new Uint8Array([...binary].map(c => c.charCodeAt(0)));
 
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-
-    return cookieValue;
+    return await window.crypto.subtle.importKey(
+        "spki",
+        bytes.buffer,
+        {
+            name: "RSA-OAEP",
+            hash: "SHA-256"
+        },
+        false,
+        ["encrypt"]
+    );
 }
 
+/* =========================
+   Encrypt password
+========================= */
+async function encryptPassword(password) {
+    const key = await importPublicKey(PUBLIC_KEY);
 
-/* LOGIN */
+    const encoded = new TextEncoder().encode(password);
+
+    const encrypted = await window.crypto.subtle.encrypt(
+        { name: "RSA-OAEP" },
+        key,
+        encoded
+    );
+
+    return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+}
+
+/* =========================
+   LOGIN FUNCTION
+========================= */
 async function loginUser() {
 
     const username = document.getElementById("username").value.trim();
@@ -213,7 +185,6 @@ async function loginUser() {
     const btn = document.querySelector(".login-btn");
 
     msg.innerText = "";
-    msg.style.color = "#dc2626";
 
     if (!username || !password) {
         msg.innerText = "Please fill all fields";
@@ -221,38 +192,37 @@ async function loginUser() {
     }
 
     btn.disabled = true;
-    btn.innerText = "Logging in...";
+    btn.innerText = "Encrypting...";
 
     try {
 
+        const encryptedPassword = await encryptPassword(password);
+
+        btn.innerText = "Logging in...";
+
         const res = await fetch("/accounts/api/login/", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-        username,
-        password
-    })
-});
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password: encryptedPassword
+            })
+        });
 
         const data = await res.json();
 
         if (!res.ok) {
-            msg.innerText = data.detail || data.error || "Login failed";
+            msg.innerText = data.detail || "Login failed";
             return;
         }
 
-        if (data.access) {
-            localStorage.setItem("access", data.access);
-        }
+        localStorage.setItem("access_token", data.access || "");
+        localStorage.setItem("refresh_token", data.refresh || "");
 
-        if (data.refresh) {
-            localStorage.setItem("refresh", data.refresh);
-        }
-
-        msg.style.color = "#16a34a";
-        msg.innerText = data.message || "Login successful";
+        msg.style.color = "green";
+        msg.innerText = "Login successful";
 
         setTimeout(() => {
             window.location.href = "/core/dashboard/";
@@ -267,7 +237,6 @@ async function loginUser() {
         btn.innerText = "Login";
     }
 }
-
 </script>
 
 </body>

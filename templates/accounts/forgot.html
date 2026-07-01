@@ -182,38 +182,47 @@ body{
 
 <script>
 
-function getCookie(name) {
-    let cookieValue = null;
+/* =========================
+   GET MESSAGE BOX
+========================= */
+function showMsg(text, type = "error") {
+    const msg = document.getElementById("msg");
+    msg.innerText = text;
 
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-
-        for (let cookie of cookies) {
-            cookie = cookie.trim();
-
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+    if (type === "success") {
+        msg.style.color = "#16a34a";
+    } else {
+        msg.style.color = "#dc2626";
     }
-
-    return cookieValue;
 }
 
+/* =========================
+   VALIDATE EMAIL
+========================= */
+function validateEmail(email) {
+    if (!email) return "Please enter your email address";
 
-/* SEND RESET LINK */
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!pattern.test(email)) return "Please enter a valid email";
+
+    return null;
+}
+
+/* =========================
+   SEND RESET LINK
+========================= */
 async function sendReset() {
 
     const email = document.getElementById("email").value.trim();
-    const msg = document.getElementById("msg");
     const btn = document.querySelector(".btn");
 
-    msg.innerText = "";
-    msg.style.color = "#dc2626";
+    /* reset message */
+    showMsg("");
 
-    if (!email) {
-        msg.innerText = "Please enter your email address";
+    /* validation */
+    const error = validateEmail(email);
+    if (error) {
+        showMsg(error, "error");
         return;
     }
 
@@ -225,30 +234,24 @@ async function sendReset() {
         const res = await fetch("/accounts/api/forgot-password/", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({ email })
         });
 
         const data = await res.json().catch(() => ({}));
 
-        if (res.ok) {
-
-            msg.style.color = "#16a34a";
-            msg.innerText = data.message || "Reset link sent successfully";
-
-        } else {
-
-            msg.style.color = "#dc2626";
-            msg.innerText = data.error || data.detail || "Failed to send reset link";
+        if (!res.ok) {
+            showMsg(data.error || data.detail || "Failed to send reset link", "error");
+            return;
         }
+
+        showMsg(data.message || "Reset link sent successfully", "success");
 
     } catch (err) {
 
         console.error(err);
-        msg.style.color = "#dc2626";
-        msg.innerText = "Network error";
+        showMsg("Network error", "error");
 
     } finally {
 

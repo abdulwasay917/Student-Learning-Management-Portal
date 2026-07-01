@@ -12,7 +12,7 @@ from rest_framework import status
 from accounts.models import TeacherProfile, StudentProfile
 import re
 from .throttle import LoginThrottle
-
+from .utils import decrypt_password
 
 
 User = get_user_model()
@@ -97,12 +97,30 @@ class CreateUserAPI(APIView):
 
 class LoginAPI(APIView):
     permission_classes = [AllowAny]
-    throttle_classes=[LoginThrottle]
+    throttle_classes = [LoginThrottle]
 
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
 
+        username = request.data.get("username")
+        encrypted_password = request.data.get("password")
+
+        if not username or not encrypted_password:
+            return Response(
+                {"error": "Username and password required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # 🔐 decrypt password coming from frontend
+            password = decrypt_password(encrypted_password)
+
+        except Exception:
+            return Response(
+                {"error": "Invalid encrypted password"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 🔑 authenticate user
         user = authenticate(request, username=username, password=password)
 
         if not user:
@@ -110,12 +128,14 @@ class LoginAPI(APIView):
                 {"error": "Invalid credentials"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         if not user.is_active:
             return Response(
                 {"error": "Account is disabled"},
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # 🔥 JWT tokens
         refresh = RefreshToken.for_user(user)
 
         return Response({
@@ -125,7 +145,7 @@ class LoginAPI(APIView):
             "user": {
                 "id": user.id,
                 "username": user.username,
-                "role": user.role
+                "role": getattr(user, "role", None)
             }
         }, status=status.HTTP_200_OK)
 
