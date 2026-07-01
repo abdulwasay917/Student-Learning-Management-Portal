@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from accounts.models import TeacherProfile, StudentProfile
 import re
+from .throttle import LoginThrottle
 
 
 
@@ -94,6 +95,7 @@ class CreateUserAPI(APIView):
 
 class LoginAPI(APIView):
     permission_classes = [AllowAny]
+    throttle_classes=[LoginThrottle]
 
     def post(self, request):
         username = request.data.get("username")
