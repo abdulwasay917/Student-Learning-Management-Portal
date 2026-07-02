@@ -111,7 +111,6 @@ class LoginAPI(APIView):
             )
 
         try:
-            # 🔐 decrypt password coming from frontend
             password = decrypt_password(encrypted_password)
 
         except Exception:

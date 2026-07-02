@@ -11,9 +11,6 @@ with open("private.pem", "rb") as f:
 
 
 def decrypt_password(encrypted_password: str) -> str:
-    """
-    Frontend se aaya hua base64 encrypted password decrypt karega
-    """
 
     encrypted_bytes = base64.b64decode(encrypted_password)
 

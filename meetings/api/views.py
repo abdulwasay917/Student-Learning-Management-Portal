@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-
+from assignments.api.permissions import IsTeacherOrAdmin
 from meetings.models import Meeting
 from .serializers import MeetingSerializer
 
@@ -20,7 +20,7 @@ class MeetingListAPI(APIView):
         return Response(serializer.data)
 
 class CreateMeetingAPI(APIView):
-
+    permission_classes = [IsTeacherOrAdmin]
     def post(self, request):
 
         if not (
@@ -46,7 +46,7 @@ class CreateMeetingAPI(APIView):
 
 
 class UpdateMeetingAPI(APIView):
-
+    permission_classes = [IsTeacherOrAdmin]
     def put(self, request, pk):
 
         try:
@@ -81,7 +81,7 @@ class UpdateMeetingAPI(APIView):
 
 
 class DeleteMeetingAPI(APIView):
-
+    permission_classes = [IsTeacherOrAdmin]
     def delete(self, request, pk):
 
         try:
