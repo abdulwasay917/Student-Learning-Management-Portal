@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from assignments.models import Assignment,Submission
@@ -6,7 +7,7 @@ from accounts.models import StudentProfile
 from assignments.api.permissions import IsTeacherOrAdmin
 
 class AssignmentListAPI(APIView):
-
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         assignments = Assignment.objects.all().order_by("-created_at")
         data = []
@@ -27,7 +28,7 @@ class AssignmentListAPI(APIView):
         return Response(data)
 
 class CreateAssignmentAPI(APIView):
-
+    permission_classes = [IsTeacherOrAdmin]
     def post(self, request):
 
         if not (request.user.role == "teacher" or request.user.is_superuser):
@@ -51,7 +52,7 @@ class CreateAssignmentAPI(APIView):
 
 
 class DeleteAssignmentAPI(APIView):
-
+    permission_classes = [IsTeacherOrAdmin]
     def delete(self, request, pk):
 
         try:
@@ -84,7 +85,7 @@ class DeleteAssignmentAPI(APIView):
 
 
 class SubmitAssignmentAPI(APIView):
-
+    permission_classes = [IsAuthenticated]
     def post(self, request, pk):
 
         if request.user.role != "student":
